@@ -93,8 +93,10 @@ public final class FalseBottomRequirementsScreen: ViewController {
         } |> deliverOnMainQueue).start(next: { [weak self] (isMasterPasswordSet, hasOtherOpenAccounts) in
             guard let strongSelf = self else { return }
             
-            strongSelf.node.masterPasswordCheckNode.setIsChecked(isMasterPasswordSet, animated: false)
-            strongSelf.node.openAccountCheckNode.setIsChecked(hasOtherOpenAccounts, animated: false)
+            strongSelf.node.masterPasscodeNode.setIsChecked(isMasterPasswordSet, animated: false)
+            
+            strongSelf.node.openAccountNode.setIsChecked(hasOtherOpenAccounts, animated: false)
+            
             strongSelf.node.inProgress = !(isMasterPasswordSet && hasOtherOpenAccounts)
         })
     }
@@ -103,10 +105,8 @@ public final class FalseBottomRequirementsScreen: ViewController {
 private final class FalseBottomRequirementsScreenNode: ViewControllerTracingNode {
     private let presentationData: PresentationData
     
-    private let openAccountTextNode: ImmediateTextNode
-    private let masterPasscodeTextNode: ImmediateTextNode
-    let openAccountCheckNode: CheckNode
-    let masterPasswordCheckNode: CheckNode
+    let openAccountNode: FalseBottomRequirementNode
+    let masterPasscodeNode: FalseBottomRequirementNode
     let buttonNode: SolidRoundedButtonNode
     
     var setMasterPassword: (() -> Void)?
@@ -122,53 +122,35 @@ private final class FalseBottomRequirementsScreenNode: ViewControllerTracingNode
     init(presentationData: PresentationData, action: @escaping () -> Void) {
         self.presentationData = presentationData
         
-        let title: NSAttributedString
-        let text: NSAttributedString
         let buttonText: String
         
         let textFont = Font.regular(16.0)
         let textColor = self.presentationData.theme.list.itemPrimaryTextColor
 
-        title = NSAttributedString(string: "There is at least one open account on this device", font: textFont, textColor: textColor)
-        text = NSAttributedString(string: "Master passcode is set up", font: textFont, textColor: textColor)
+        let openAccountAttributedString = NSAttributedString(string: "There is at least one open account on this device", font: textFont, textColor: textColor)
+        let masterPasscodeAttributedString = NSAttributedString(string: "Master passcode is set up", font: textFont, textColor: textColor)
+        
         buttonText = "Continue"
         
-        self.openAccountTextNode = ImmediateTextNode()
-        self.openAccountTextNode.displaysAsynchronously = false
-        self.openAccountTextNode.attributedText = title
-        self.openAccountTextNode.maximumNumberOfLines = 0
-        self.openAccountTextNode.lineSpacing = 0.1
-        self.openAccountTextNode.textAlignment = .left
+        self.openAccountNode = FalseBottomRequirementNode(presentationData: presentationData, attributedString: openAccountAttributedString)
+        self.openAccountNode.displaysAsynchronously = false
         
-        self.masterPasscodeTextNode = ImmediateTextNode()
-        self.masterPasscodeTextNode.displaysAsynchronously = false
-        self.masterPasscodeTextNode.attributedText = text
-        self.masterPasscodeTextNode.maximumNumberOfLines = 0
-        self.masterPasscodeTextNode.lineSpacing = 0.1
-        self.masterPasscodeTextNode.textAlignment = .left
+        self.masterPasscodeNode = FalseBottomRequirementNode(presentationData: presentationData, attributedString: masterPasscodeAttributedString)
+        self.masterPasscodeNode.displaysAsynchronously = false
         
         self.buttonNode = SolidRoundedButtonNode(title: buttonText, theme: SolidRoundedButtonTheme(backgroundColor: self.presentationData.theme.list.itemCheckColors.fillColor, foregroundColor: self.presentationData.theme.list.itemCheckColors.foregroundColor), height: 50.0, cornerRadius: 10.0, gloss: false)
         self.buttonNode.isHidden = buttonText.isEmpty
-        
-        self.openAccountCheckNode = CheckNode(strokeColor: presentationData.theme.list.itemCheckColors.strokeColor, fillColor: presentationData.theme.list.itemSwitchColors.positiveColor, foregroundColor: presentationData.theme.list.itemCheckColors.foregroundColor, style: .plain)
-        
-        self.masterPasswordCheckNode = CheckNode(strokeColor: presentationData.theme.list.itemCheckColors.strokeColor, fillColor: presentationData.theme.list.itemSwitchColors.positiveColor, foregroundColor: presentationData.theme.list.itemCheckColors.foregroundColor, style: .plain)
         
         super.init()
         
         self.backgroundColor = self.presentationData.theme.list.plainBackgroundColor
         
-        self.addSubnode(self.openAccountTextNode)
-        self.addSubnode(self.masterPasscodeTextNode)
+        self.addSubnode(self.openAccountNode)
+        self.addSubnode(self.masterPasscodeNode)
         self.addSubnode(self.buttonNode)
-        self.addSubnode(self.openAccountCheckNode)
-        self.addSubnode(self.masterPasswordCheckNode)
         
-        self.openAccountCheckNode.addTarget(target: self, action: #selector(didTapOpenAccountText))
-        self.masterPasswordCheckNode.addTarget(target: self, action: #selector(didTapMasterPasswordText))
-        
-        self.openAccountTextNode.view.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(didTapOpenAccountText)))
-        self.masterPasswordCheckNode.view.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(didTapMasterPasswordText)))
+        self.openAccountNode.addTarget(self, action: #selector(didTapOpenAccount), forControlEvents: .touchUpInside)
+        self.masterPasscodeNode.addTarget(self, action: #selector(didTapMasterPassword), forControlEvents: .touchUpInside)
         
         self.buttonNode.pressed = {
             action()
@@ -188,10 +170,10 @@ private final class FalseBottomRequirementsScreenNode: ViewControllerTracingNode
         let buttonHeight: CGFloat = 50.0
         let checkSize = CGSize(width: 32.0, height: 32.0)
         
-        let openAccountTextSize = self.openAccountTextNode.updateLayout(CGSize(width: layout.size.width - sideInset * 2.0 - checkSize.width, height: layout.size.height))
-        let masterPasscodeTextSize = self.masterPasscodeTextNode.updateLayout(CGSize(width: layout.size.width - sideInset * 2.0 - checkSize.width, height: layout.size.height))
+        let openAccountSize = self.openAccountNode.updateLayout(width: layout.size.width - sideInset * 2.0)
+        let masterPasscodeSize = self.masterPasscodeNode.updateLayout(width: layout.size.width - sideInset * 2.0)
         
-        let contentHeight = openAccountTextSize.height + titleSpacing + masterPasscodeTextSize.height
+        let contentHeight = openAccountSize.height + titleSpacing + masterPasscodeSize.height
         var contentVerticalOrigin = floor((layout.size.height - contentHeight / 2.0) / 2.0)
         
         let minimalBottomInset: CGFloat = 60.0
@@ -208,28 +190,70 @@ private final class FalseBottomRequirementsScreenNode: ViewControllerTracingNode
         contentVerticalOrigin = min(contentVerticalOrigin, maxContentVerticalOrigin)
         
         
-        let openAccountTextFrame = CGRect(origin: CGPoint(x: sideInset + checkSize.width, y: contentVerticalOrigin), size: openAccountTextSize)
-        transition.updateFrameAdditive(node: self.openAccountTextNode, frame: openAccountTextFrame)
+        let openAccountFrame = CGRect(origin: CGPoint(x: sideInset, y: contentVerticalOrigin), size: openAccountSize)
+        transition.updateFrameAdditive(node: self.openAccountNode, frame: openAccountFrame)
         
-        let masterPasscodeTextFrame = CGRect(origin: CGPoint(x: sideInset + checkSize.width, y: openAccountTextFrame.maxY + titleSpacing), size: masterPasscodeTextSize)
-        transition.updateFrameAdditive(node: self.masterPasscodeTextNode, frame: masterPasscodeTextFrame)
-        
-        let openAccountCheckFrame = CGRect(origin: CGPoint(x: sideInset, y: openAccountTextFrame.midY - checkSize.width / 2), size: checkSize)
-        transition.updateFrameAdditive(node: self.openAccountCheckNode, frame: openAccountCheckFrame)
-        
-        let masterPasswordCheckFrame = CGRect(origin: CGPoint(x: sideInset, y: masterPasscodeTextFrame.midY - checkSize.width / 2), size: checkSize)
-        transition.updateFrameAdditive(node: self.masterPasswordCheckNode, frame: masterPasswordCheckFrame)
+        let masterPasscodeFrame = CGRect(origin: CGPoint(x: sideInset, y: openAccountFrame.maxY + titleSpacing), size: masterPasscodeSize)
+        transition.updateFrameAdditive(node: self.masterPasscodeNode, frame: masterPasscodeFrame)
     }
     
-    @objc private func didTapOpenAccountText() {
-        guard !self.openAccountCheckNode.isChecked else { return }
+    @objc private func didTapOpenAccount() {
+        guard !self.openAccountNode.isChecked else { return }
         
         self.createAnotherAccount?()
     }
     
-    @objc private func didTapMasterPasswordText() {
-        guard !self.masterPasswordCheckNode.isChecked else { return }
+    @objc private func didTapMasterPassword() {
+        guard !self.masterPasscodeNode.isChecked else { return }
         
         self.setMasterPassword?()
+    }
+}
+
+final class FalseBottomRequirementNode: ASControlNode {
+    private let textNode: ImmediateTextNode
+    private let checkNode: CheckNode
+    
+    public private(set) var isChecked: Bool = false
+
+    init(presentationData: PresentationData, attributedString: NSAttributedString) {
+        self.textNode = ImmediateTextNode()
+        self.textNode.displaysAsynchronously = false
+        self.textNode.attributedText = attributedString
+        self.textNode.maximumNumberOfLines = 0
+        self.textNode.lineSpacing = 0.1
+        self.textNode.textAlignment = .left
+        
+        self.checkNode = CheckNode(strokeColor: presentationData.theme.list.itemCheckColors.strokeColor, fillColor: presentationData.theme.list.itemSwitchColors.positiveColor, foregroundColor: presentationData.theme.list.itemCheckColors.foregroundColor, style: .plain)
+        
+        super.init()
+        
+        self.backgroundColor = presentationData.theme.list.plainBackgroundColor
+        
+        self.addSubnode(self.textNode)
+        self.addSubnode(self.checkNode)
+    }
+    
+    func setIsChecked(_ isChecked: Bool, animated: Bool) {
+        self.isChecked = isChecked
+        self.checkNode.setIsChecked(isChecked, animated: animated)
+    }
+    
+    func updateLayout(width: CGFloat) -> CGSize {
+        let spacing: CGFloat = 12.0
+
+        let checkSize = CGSize(width: 32.0, height: 32.0)
+
+        let textWidth = width - spacing - checkSize.width
+        
+        let textSize = self.textNode.updateLayout(CGSize(width: textWidth, height: .greatestFiniteMagnitude))
+        
+        let height: CGFloat = max(checkSize.height, textSize.height)
+        
+        self.textNode.frame = CGRect(origin: CGPoint(x: spacing + checkSize.width, y: (height - textSize.height) / 2), size: textSize)
+        
+        self.checkNode.frame = CGRect(origin: CGPoint(x: 0, y: (height - checkSize.height) / 2), size: checkSize)
+        
+        return CGSize(width: width, height: height)
     }
 }
