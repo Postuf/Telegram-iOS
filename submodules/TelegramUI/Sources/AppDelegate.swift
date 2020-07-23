@@ -2092,13 +2092,15 @@ final class SharedApplicationContext {
                 }
                 replaceTopControllerImpl(setupController, false)
             }
-            
-            context.rootController.currentWindow?.present(standardTextAlertController(theme: AlertControllerTheme(presentationData: presentationData), title: nil, text: "Add false bottom?", actions: [
-                TextAlertAction(type: .genericAction, title: "Yes", action: {
+                        
+            context.rootController.currentWindow?.present(UndoOverlayController(presentationData: presentationData, content: .falseBottom(title: "Hide account", cancel: "Cancel"), elevatedLayout: false, animateInAsReplacement: false, action: { value in
+                    guard value != .undo else { return false }
+                
                     showSplashScreen(.intro, true, { showRequirementsScreen(addFalseBottomToCurrentAccount) })
-                }),
-                TextAlertAction(type: .defaultAction, title: "No", action: {})
-            ]), on: .root, blockInteraction: false, completion: {})
+                    
+                    return true
+                }
+            ), on: .root, blockInteraction: false, completion: {})
         }))
     }
     
