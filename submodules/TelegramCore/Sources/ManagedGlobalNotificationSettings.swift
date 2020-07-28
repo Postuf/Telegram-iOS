@@ -19,6 +19,19 @@ public func updateGlobalNotificationSettingsInteractively(postbox: Postbox, _ f:
     }
 }
 
+public func setTempGlobalNotificationSettingsInteractively(postbox: Postbox, _ f: @escaping (GlobalNotificationSettingsSet) -> GlobalNotificationSettingsSet) -> Signal<Void, NoError> {
+    return postbox.transaction { transaction -> Void in
+        transaction.updatePreferencesEntry(key: PreferencesKeys.tempGlobalNotifications, { current in
+            if let current = current as? GlobalNotificationSettings {
+                return GlobalNotificationSettings(toBeSynchronized: f(current.effective), remote: current.remote)
+            } else {
+                let settings = f(GlobalNotificationSettingsSet.muteSettings)
+                return GlobalNotificationSettings(toBeSynchronized: settings, remote: settings)
+            }
+        })
+    }
+}
+
 public func resetPeerNotificationSettings(network: Network) -> Signal<Void, NoError> {
     return network.request(Api.functions.account.resetNotifySettings())
         |> retryRequest

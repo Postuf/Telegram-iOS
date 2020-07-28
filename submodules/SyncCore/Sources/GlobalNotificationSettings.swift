@@ -9,6 +9,10 @@ public struct MessageNotificationSettings: PostboxCoding, Equatable {
         return MessageNotificationSettings(enabled: true, displayPreviews: true, sound: .bundledModern(id: 0))
     }
     
+    public static var muteSettings: MessageNotificationSettings {
+        return MessageNotificationSettings(enabled: false, displayPreviews: false, sound: .none)
+    }
+    
     public init(enabled: Bool, displayPreviews: Bool, sound: PeerMessageSound) {
         self.enabled = enabled
         self.displayPreviews = displayPreviews
@@ -36,6 +40,10 @@ public struct GlobalNotificationSettingsSet: PostboxCoding, Equatable {
     
     public static var defaultSettings: GlobalNotificationSettingsSet {
         return GlobalNotificationSettingsSet(privateChats: MessageNotificationSettings.defaultSettings, groupChats: .defaultSettings, channels: .defaultSettings, contactsJoined: true)
+    }
+    
+    public static var muteSettings: GlobalNotificationSettingsSet {
+        return GlobalNotificationSettingsSet(privateChats: .muteSettings, groupChats: .muteSettings, channels: .muteSettings, contactsJoined: true)
     }
     
     public init(privateChats: MessageNotificationSettings, groupChats: MessageNotificationSettings, channels: MessageNotificationSettings, contactsJoined: Bool) {

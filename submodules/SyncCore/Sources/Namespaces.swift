@@ -193,6 +193,7 @@ public extension PeerSummaryCounterTags {
 
 private enum PreferencesKeyValues: Int32 {
     case globalNotifications = 0
+    case tempGlobalNotifications = 44
     case suggestedLocalization = 3
     case limitsConfiguration = 4
     case coreSettings = 7
@@ -229,6 +230,12 @@ public struct PreferencesKeys {
     public static let globalNotifications: ValueBoxKey = {
         let key = ValueBoxKey(length: 4)
         key.setInt32(0, value: PreferencesKeyValues.globalNotifications.rawValue)
+        return key
+    }()
+    
+    public static let tempGlobalNotifications: ValueBoxKey = {
+        let key = ValueBoxKey(length: 4)
+        key.setInt32(0, value: PreferencesKeyValues.tempGlobalNotifications.rawValue)
         return key
     }()
     

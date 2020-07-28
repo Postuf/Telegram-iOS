@@ -307,10 +307,20 @@ public func setAccountRecordAccessChallengeData(transaction: AccountManagerModif
 public func changeChatsAndChannelsNotifications(unmute: Bool, atAccount account: Account) {
     let _ = updateGlobalNotificationSettingsInteractively(postbox: account.postbox, { settings in
         var settings = settings
+        
+        saveTempGlobalNotificationSettingsInteractively(settings: settings, atAccount: account)
+        
         settings.privateChats.enabled = unmute
         settings.groupChats.enabled = unmute
         settings.channels.enabled = unmute
         return settings
+    }).start()
+}
+
+public func saveTempGlobalNotificationSettingsInteractively(settings: GlobalNotificationSettingsSet, atAccount account: Account) {
+    let _ = setTempGlobalNotificationSettingsInteractively(postbox: account.postbox, { tempSettings in
+        var tempSettings = settings
+        return tempSettings
     }).start()
 }
 
