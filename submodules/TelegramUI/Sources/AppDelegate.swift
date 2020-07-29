@@ -2053,7 +2053,7 @@ final class SharedApplicationContext {
             }
                                                          
             context.rootController.chatListController?.present(UndoOverlayController(presentationData: presentationData, content: .falseBottom(title: presentationData.strings.FalseBottom_Toast_HideAccount, cancel: presentationData.strings.Common_Cancel), elevatedLayout: true, animateInAsReplacement: false, action: { value in
-                    guard value != .undo else { return false }
+                    guard value == .info else { return false }
                 
                     showSplashScreen(.hideAccount, true, {
                         showOtherAccountScreenIfNeeded { [weak self] in
@@ -2119,14 +2119,14 @@ final class SharedApplicationContext {
                             innerCompletion()
                         })
                     }
-                    context.rootController.pushViewController(setupController, animated: true)
+                    context.rootController.replaceTopController(setupController, animated: true)
                 }
                 
                 checkMasterPassode({ isMasterPasscodeSet in
                     if isMasterPasscodeSet {
                         completion()
                     } else {
-                        showSplashScreen(.setMasterPasscode, true, {
+                        showSplashScreen(.setMasterPasscode, false, {
                             setupMasterPasscode(completion)
                         })
                     }
@@ -2171,7 +2171,6 @@ final class SharedApplicationContext {
                                 
                                 setAccountRecordAccessChallengeData(transaction: transaction, id: id, accessChallengeData: data)
                             }
-
                         }) |> deliverOnMainQueue).start(next: { _ in
                         }, error: { _ in
                         }, completed: {
@@ -2185,7 +2184,7 @@ final class SharedApplicationContext {
                     replaceTopControllerImpl(setupController, false)
                 }
                 
-                showSplashScreen(.setSecretPasscode, true, addFalseBottomToCurrentAccount)
+                showSplashScreen(.setSecretPasscode, false, addFalseBottomToCurrentAccount)
             }
 
             showMasterPasscodeScreenIfNeeded(showSecretPasscodeScreen)
