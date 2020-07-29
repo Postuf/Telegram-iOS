@@ -308,7 +308,10 @@ public func changeChatsAndChannelsNotifications(unmute: Bool, atAccount account:
     let _ = updateGlobalNotificationSettingsInteractively(postbox: account.postbox, { settings in
         var settings = settings
         
-        saveTempGlobalNotificationSettingsInteractively(settings: settings, atAccount: account)
+        let _ = setTempGlobalNotificationSettingsInteractively(postbox: account.postbox, { tempSettings in
+            var tempSettings = settings
+            return tempSettings
+        }).start()
         
         settings.privateChats.enabled = unmute
         settings.groupChats.enabled = unmute
@@ -317,10 +320,13 @@ public func changeChatsAndChannelsNotifications(unmute: Bool, atAccount account:
     }).start()
 }
 
-public func saveTempGlobalNotificationSettingsInteractively(settings: GlobalNotificationSettingsSet, atAccount account: Account) {
-    let _ = setTempGlobalNotificationSettingsInteractively(postbox: account.postbox, { tempSettings in
-        var tempSettings = settings
-        return tempSettings
+public func setSavedChatsAndChannelsNotificationsSettings(at account: Account) {
+    let _ = setTempGlobalNotificationSettingsInteractively(postbox: account.postbox, { settings in
+        let _ = updateGlobalNotificationSettingsInteractively(postbox: account.postbox, { _ in
+            return settings
+        }).start()
+        
+        return settings
     }).start()
 }
 
