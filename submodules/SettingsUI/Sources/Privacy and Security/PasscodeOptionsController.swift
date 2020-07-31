@@ -235,28 +235,15 @@ func passcodeOptionsController(context: AccountContext) -> ViewController {
     })
     
     func hiddenAccountsNotificationsUnmute(_ unmute: Bool) {
-        let _ = context.sharedContext.accountManager.transaction({
-            transaction -> Void in
-            let records = transaction.getAllRecords()
-            let hiddenRecords = records.filter {
-                var attributes = $0.attributes
-                return attributes.contains { $0 is HiddenAccountAttribute } ?? false
+        let _ = (context.sharedContext.activeAccounts
+        |> map { _, accounts, _ -> [Account] in
+            let activeAccounts = accounts.map { $0.1 }
+            
+            for account in activeAccounts where account.isHidden {
+                changeChatsAndChannelsNotifications(unmute: unmute, atAccount: account)
             }
-            
-            let _ = (context.sharedContext.activeAccounts
-            |> map { _, accounts, _ -> [Account] in
-                    let activeAccounts = accounts.map { $0.1 }
-                
-                    for record in hiddenRecords {
-                        if let account = activeAccounts.first(where: { $0.id == record.id }) {
-                            changeChatsAndChannelsNotifications(unmute: unmute, atAccount: account)
-                        }
-                    }
-                
-                    return activeAccounts
-                }
-            ).start()
-            
+        
+            return activeAccounts
         }).start()
     }
     
@@ -424,28 +411,15 @@ func passcodeOptionsController(context: AccountContext) -> ViewController {
 public func passcodeOptionsAccessController(context: AccountContext, animateIn: Bool = true, pushController: ((ViewController) -> Void)?, completion: @escaping (Bool) -> Void) -> Signal<ViewController?, NoError> {
     
     func setHiddenAccountsNotificationsSettings() {
-        let _ = context.sharedContext.accountManager.transaction({
-            transaction -> Void in
-            let records = transaction.getAllRecords()
-            let hiddenRecords = records.filter {
-                var attributes = $0.attributes
-                return attributes.contains { $0 is HiddenAccountAttribute } ?? false
+        let _ = (context.sharedContext.activeAccounts
+        |> map { _, accounts, _ -> [Account] in
+            let activeAccounts = accounts.map { $0.1 }
+                
+            for account in activeAccounts where account.isHidden {
+                setSavedChatsAndChannelsNotificationsSettings(at: account)
             }
-            
-            let _ = (context.sharedContext.activeAccounts
-            |> map { _, accounts, _ -> [Account] in
-                    let activeAccounts = accounts.map { $0.1 }
                 
-                    for record in hiddenRecords {
-                        if let account = activeAccounts.first(where: { $0.id == record.id }) {
-                            setSavedChatsAndChannelsNotificationsSettings(at: account)
-                        }
-                    }
-                
-                    return activeAccounts
-                }
-            ).start()
-            
+            return activeAccounts
         }).start()
     }
     
