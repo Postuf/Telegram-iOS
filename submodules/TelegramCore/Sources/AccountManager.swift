@@ -260,7 +260,7 @@ public final class DisplayedAccountsFilterImpl: DisplayedAccountsFilter {
             }
             return (record, order)
         }
-        let sortedRecords = recordsWithOrder.sorted(by: { $0.1 < $1.1 })
+        let sortedRecords = recordsWithOrder.sorted(by: { $0.1 > $1.1 })
             .map { $0.0 }
         
         var result = [AccountRecord]()
@@ -334,6 +334,10 @@ public func currentAccount(allocateIfNotExists: Bool, networkArguments: NetworkI
     })
     |> mapToSignal { record -> Signal<AccountResult?, NoError> in
         if let record = record {
+            guard !record.1.contains(where: { $0 is HiddenAccountAttribute }) else {
+                return .single(nil)
+            }
+            
             let reload = ValuePromise<Bool>(true, ignoreRepeated: false)
             return reload.get()
             |> mapToSignal { _ -> Signal<AccountResult?, NoError> in
