@@ -233,12 +233,6 @@ public struct PreferencesKeys {
         return key
     }()
     
-    public static let tempGlobalNotifications: ValueBoxKey = {
-        let key = ValueBoxKey(length: 4)
-        key.setInt32(0, value: PreferencesKeyValues.tempGlobalNotifications.rawValue)
-        return key
-    }()
-    
     public static let suggestedLocalization: ValueBoxKey = {
         let key = ValueBoxKey(length: 4)
         key.setInt32(0, value: PreferencesKeyValues.suggestedLocalization.rawValue)
