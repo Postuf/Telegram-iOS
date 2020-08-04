@@ -1,7 +1,7 @@
 {
   "images" : [
     {
-      "filename" : "Icon-24@2x.png",
+      "filename" : "38mm 2x Notification Center.png",
       "idiom" : "watch",
       "role" : "notificationCenter",
       "scale" : "2x",
@@ -9,7 +9,7 @@
       "subtype" : "38mm"
     },
     {
-      "filename" : "Icon-27.5@2x.png",
+      "filename" : "42mm 2x Notification Center.png",
       "idiom" : "watch",
       "role" : "notificationCenter",
       "scale" : "2x",
@@ -17,21 +17,21 @@
       "subtype" : "42mm"
     },
     {
-      "filename" : "Icon-29@2x.png",
+      "filename" : "44mm 2x CS Notification Center.png",
       "idiom" : "watch",
       "role" : "companionSettings",
       "scale" : "2x",
       "size" : "29x29"
     },
     {
-      "filename" : "87.png",
+      "filename" : "3x CS Notification Center.png",
       "idiom" : "watch",
       "role" : "companionSettings",
       "scale" : "3x",
       "size" : "29x29"
     },
     {
-      "filename" : "Icon-40@2x.png",
+      "filename" : "38mm 2x Home Screen.png",
       "idiom" : "watch",
       "role" : "appLauncher",
       "scale" : "2x",
@@ -39,7 +39,7 @@
       "subtype" : "38mm"
     },
     {
-      "filename" : "Icon-44@2x.png",
+      "filename" : "42mm 2x Home Screen.png",
       "idiom" : "watch",
       "role" : "appLauncher",
       "scale" : "2x",
@@ -47,7 +47,7 @@
       "subtype" : "40mm"
     },
     {
-      "filename" : "100.png",
+      "filename" : "44mm 2x Home Screen.png",
       "idiom" : "watch",
       "role" : "appLauncher",
       "scale" : "2x",
@@ -55,7 +55,7 @@
       "subtype" : "44mm"
     },
     {
-      "filename" : "Icon-86@2x.png",
+      "filename" : "38mm 2x Short Look.png",
       "idiom" : "watch",
       "role" : "quickLook",
       "scale" : "2x",
@@ -63,7 +63,7 @@
       "subtype" : "38mm"
     },
     {
-      "filename" : "Icon-98@2x-1.png",
+      "filename" : "42mm 2x Short Look.png",
       "idiom" : "watch",
       "role" : "quickLook",
       "scale" : "2x",
@@ -71,7 +71,7 @@
       "subtype" : "42mm"
     },
     {
-      "filename" : "216.png",
+      "filename" : "44mm 2x Short Look.png",
       "idiom" : "watch",
       "role" : "quickLook",
       "scale" : "2x",
@@ -79,7 +79,7 @@
       "subtype" : "44mm"
     },
     {
-      "filename" : "1024.png",
+      "filename" : "App Store 1024pt.png",
       "idiom" : "watch-marketing",
       "scale" : "1x",
       "size" : "1024x1024"

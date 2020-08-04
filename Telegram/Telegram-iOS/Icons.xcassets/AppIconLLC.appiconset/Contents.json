@@ -1,109 +1,115 @@
 {
   "images" : [
     {
-      "filename" : "BlackClassicNotificationIcon@2x.png",
+      "filename" : "iPhone Notifications 20pt@2x.png",
       "idiom" : "iphone",
       "scale" : "2x",
       "size" : "20x20"
     },
     {
-      "filename" : "BlackClassicNotificationIcon@3x.png",
+      "filename" : "iPhone Notifications 20pt@3x.png",
       "idiom" : "iphone",
       "scale" : "3x",
       "size" : "20x20"
     },
     {
-      "filename" : "58.png",
+      "filename" : "iPhone Settings 29pt.png",
+      "idiom" : "iphone",
+      "scale" : "1x",
+      "size" : "29x29"
+    },
+    {
+      "filename" : "iPhone Settings 29pt@2x.png",
       "idiom" : "iphone",
       "scale" : "2x",
       "size" : "29x29"
     },
     {
-      "filename" : "87.png",
+      "filename" : "iPhone Settings 29pt@3x.png",
       "idiom" : "iphone",
       "scale" : "3x",
       "size" : "29x29"
     },
     {
-      "filename" : "80.png",
+      "filename" : "iPhone Spotlight 40pt@2x.png",
       "idiom" : "iphone",
       "scale" : "2x",
       "size" : "40x40"
     },
     {
-      "filename" : "BlackClassicIcon@2x.png",
+      "filename" : "iPhone Spotlight 40pt@3x.png",
       "idiom" : "iphone",
       "scale" : "3x",
       "size" : "40x40"
     },
     {
-      "filename" : "BlackClassicIcon@2x-1.png",
+      "filename" : "iPhone App 60pt@2x.png",
       "idiom" : "iphone",
       "scale" : "2x",
       "size" : "60x60"
     },
     {
-      "filename" : "BlackClassicIcon@3x.png",
+      "filename" : "iPhone App 60pt@3x.png",
       "idiom" : "iphone",
       "scale" : "3x",
       "size" : "60x60"
     },
     {
-      "filename" : "BlackClassicNotificationIcon.png",
+      "filename" : "iPad Notifications 20pt.png",
       "idiom" : "ipad",
       "scale" : "1x",
       "size" : "20x20"
     },
     {
-      "filename" : "BlackClassicNotificationIcon@2x-1.png",
+      "filename" : "iPad Notifications 20pt@2x.png",
       "idiom" : "ipad",
       "scale" : "2x",
       "size" : "20x20"
     },
     {
-      "filename" : "29.png",
+      "filename" : "iPad Settings 29pt.png",
       "idiom" : "ipad",
       "scale" : "1x",
       "size" : "29x29"
     },
     {
-      "filename" : "58-1.png",
+      "filename" : "iPad Settings 29pt@2x.png",
       "idiom" : "ipad",
       "scale" : "2x",
       "size" : "29x29"
     },
     {
-      "filename" : "BlackClassicNotificationIcon@2x-2.png",
+      "filename" : "iPad Spotlight 40pt.png",
       "idiom" : "ipad",
       "scale" : "1x",
       "size" : "40x40"
     },
     {
-      "filename" : "80-1.png",
+      "filename" : "iPad Spotlight 40pt@2x.png",
       "idiom" : "ipad",
       "scale" : "2x",
       "size" : "40x40"
     },
     {
-      "filename" : "BlackClassicIconIpad.png",
+      "filename" : "iPad App 76pt.png",
       "idiom" : "ipad",
       "scale" : "1x",
       "size" : "76x76"
     },
     {
-      "filename" : "BlackClassicIconIpad@2x.png",
+      "filename" : "iPad App 76pt@2x.png",
       "idiom" : "ipad",
       "scale" : "2x",
       "size" : "76x76"
     },
     {
-      "filename" : "BlackClassicIconLargeIpad@2x.png",
+      "filename" : "iPad Pro App 83.5pt@2x.png",
       "idiom" : "ipad",
       "scale" : "2x",
       "size" : "83.5x83.5"
     },
     {
-      "filename" : "1024.png",
+      "filename" : "App Store 1024pt.png",
       "idiom" : "ios-marketing",
       "scale" : "1x",
       "size" : "1024x1024"
