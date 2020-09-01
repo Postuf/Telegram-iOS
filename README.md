@@ -8,7 +8,7 @@ brew install yasm cmake
 3. Clone the project from GitHub:
 
 ```
-git clone --recursive https://github.com/TelegramMessenger/Telegram-iOS.git
+git clone --recursive https://github.com/Postuf/Telegram-iOS-Double-Bottom-Postufgram.git
 ```
 4. Open Telegram-iOS.workspace.
 5. Open the Telegram-iOS-Fork scheme.
