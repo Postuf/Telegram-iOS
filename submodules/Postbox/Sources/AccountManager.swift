@@ -82,7 +82,7 @@ final class AccountManagerImpl {
         }
     }
     
-    fileprivate init?(queue: Queue, basePath: String, hiddenAccountManager: HiddenAccountManager, isTemporary: Bool, isReadOnly: Bool, temporarySessionId: Int64) {
+    fileprivate init?(queue: Queue, basePath: String, isTemporary: Bool, isReadOnly: Bool, temporarySessionId: Int64, hiddenAccountManager: HiddenAccountManager) {
         let startTime = CFAbsoluteTimeGetCurrent()
         
         self.queue = queue
@@ -515,7 +515,7 @@ public final class AccountManager {
         return AccountManagerImpl.getCurrentRecords(basePath: basePath)
     }
     
-    public init(basePath: String, hiddenAccountManager: HiddenAccountManager, isTemporary: Bool, isReadOnly: Bool) {
+    public init(basePath: String, isTemporary: Bool, isReadOnly: Bool, hiddenAccountManager: HiddenAccountManager) {
         self.queue = sharedQueue
         self.basePath = basePath
         var temporarySessionId: Int64 = 0
@@ -523,7 +523,7 @@ public final class AccountManager {
         self.temporarySessionId = temporarySessionId
         let queue = self.queue
         self.impl = QueueLocalObject(queue: queue, generate: {
-            if let value = AccountManagerImpl(queue: queue, basePath: basePath, hiddenAccountManager: hiddenAccountManager, isTemporary: isTemporary, isReadOnly: isReadOnly, temporarySessionId: temporarySessionId) {
+            if let value = AccountManagerImpl(queue: queue, basePath: basePath, isTemporary: isTemporary, isReadOnly: isReadOnly, temporarySessionId: temporarySessionId, hiddenAccountManager: hiddenAccountManager) {
                 return value
             } else {
                 preconditionFailure()
