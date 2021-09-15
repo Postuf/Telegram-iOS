@@ -221,13 +221,13 @@ public final class AppLockContextImpl: AppLockContext {
                     } else {
                         strongSelf.lockingIsCompletePromise.set(.single(false))
                         
-                        let passcodeController = PasscodeEntryController(applicationBindings: strongSelf.applicationBindings, accountManager: strongSelf.accountManager, appLockContext: strongSelf, presentationData: presentationData, presentationDataSignal: strongSelf.presentationDataSignal, statusBarHost: window?.statusBarHost, challengeData: accessChallengeData.data, hiddenAccountsAccessChallengeData: strongSelf.hiddenAccountsAccessChallengeData, biometrics: biometrics, arguments: PasscodeEntryControllerPresentationArguments(animated: !becameActiveRecently, lockIconInitialFrame: {
+                        let passcodeController = PasscodeEntryController(applicationBindings: strongSelf.applicationBindings, accountManager: strongSelf.accountManager, appLockContext: strongSelf, presentationData: presentationData, presentationDataSignal: strongSelf.presentationDataSignal, statusBarHost: window?.statusBarHost, challengeData: accessChallengeData.data, biometrics: biometrics, arguments: PasscodeEntryControllerPresentationArguments(animated: !becameActiveRecently, lockIconInitialFrame: {
                             if let lockViewFrame = lockIconInitialFrame() {
                                 return lockViewFrame
                             } else {
                                 return CGRect()
                             }
-                        }), hasPublicAccountsSignal: accountManager.hiddenAccountManager.hasPublicAccounts(accountManager: accountManager))
+                        }), hiddenAccountsAccessChallengeData: strongSelf.hiddenAccountsAccessChallengeData, hasPublicAccountsSignal: accountManager.hiddenAccountManager.hasPublicAccounts(accountManager: accountManager))
                         if becameActiveRecently, appInForeground {
                             passcodeController.presentationCompleted = { [weak passcodeController, weak self] in
                                 if let strongSelf = self {
