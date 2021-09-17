@@ -1450,7 +1450,7 @@ public class ChatListControllerImpl: TelegramBaseController, ChatListController 
     }
     
     // MARK: Postufgram Code: {
-    @objc private func dismissActivityViewControllerIfNeeded() {
+    private func dismissActivityViewControllerIfNeeded() {
         // Close the UIActivityViewController when reload ChatList.
         guard let rootViewController = self.view.window?.rootViewController,
               let presentedViewController = rootViewController.presentedViewController,
