@@ -205,8 +205,6 @@ public class ShareRootControllerImpl {
             
             let internalContext: InternalContext
             
-            initializeAccountManagement()
-            
             let hiddenAccountManager = HiddenAccountManagerImpl()
             let accountManager = AccountManager<TelegramAccountManagerTypes>(basePath: rootPath + "/accounts-metadata", isTemporary: true, isReadOnly: false, hiddenAccountManager: hiddenAccountManager)
             
