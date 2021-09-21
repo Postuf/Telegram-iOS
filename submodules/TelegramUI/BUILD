@@ -30,7 +30,7 @@ available_appcenter_targets = [
     "@appcenter_sdk//:AppCenterCrashes",
 ]
 
-appcenter_targets = available_appcenter_targets if telegram_bundle_id in internal_bundle_ids else []
+appcenter_targets = available_appcenter_targets
 
 swift_library(
     name = "TelegramUI",
@@ -240,7 +240,7 @@ swift_library(
         "//submodules/WallpaperBackgroundNode:WallpaperBackgroundNode",
         "//submodules/ComponentFlow:ComponentFlow",
     ] + select({
-        "@build_bazel_rules_apple//apple:ios_armv7": [],
+        "@build_bazel_rules_apple//apple:ios_armv7": appcenter_targets,
         "@build_bazel_rules_apple//apple:ios_arm64": appcenter_targets,
         "//build-system:ios_sim_arm64": [],
         "@build_bazel_rules_apple//apple:ios_x86_64": [],
