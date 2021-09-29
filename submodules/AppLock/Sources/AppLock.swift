@@ -204,7 +204,7 @@ public final class AppLockContextImpl: AppLockContext {
                 strongSelf.lastActiveValue = false
             }
             // MARK: Postufgram Code: {
-            strongSelf.checkCurrentAccountDisposable.set(strongSelf.updateIsCurrentAccountHidden())
+            strongSelf.checkCurrentAccountDisposable.set(strongSelf.updateIsCurrentAccountHiddenProperty())
             // MARK: Postufgram Code: }
             var shouldDisplayCoveringView = false
             var isCurrentlyLocked = false
@@ -373,7 +373,7 @@ public final class AppLockContextImpl: AppLockContext {
     }
     
     // MARK: Postufgram Code: {
-    private func updateIsCurrentAccountHidden() -> Disposable{
+    private func updateIsCurrentAccountHiddenProperty() -> Disposable {
         (accountManager.currentAccountRecord(allocateIfNotExists: false)
             |> mapToQueue { [weak self] accountRecord -> Signal<Bool, NoError> in
                 guard let strongSelf = self,
