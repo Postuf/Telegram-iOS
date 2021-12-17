@@ -68,7 +68,11 @@ final class ChatMessageWebpageBubbleContentNode: ChatMessageBubbleContentNode {
                     if let bot = author as? TelegramUser, bot.botInfo != nil, let startParam = adAttribute.startParam {
                         navigationData = .withBotStartPayload(ChatControllerInitialBotStart(payload: startParam, behavior: .interactive))
                     } else {
-                        navigationData = .chat(textInputState: nil, subject: nil, peekData: nil)
+                        var subject: ChatControllerSubject?
+                        if let messageId = adAttribute.messageId {
+                            subject = .message(id: .id(messageId), highlight: true, timecode: nil)
+                        }
+                        navigationData = .chat(textInputState: nil, subject: subject, peekData: nil)
                     }
                     item.controllerInteraction.openPeer(author.id, navigationData, nil)
                 } else {
@@ -283,6 +287,10 @@ final class ChatMessageWebpageBubbleContentNode: ChatMessageBubbleContentNode {
                     }
                 } else if let type = webpage.type {
                     switch type {
+                        case "telegram_channel_request":
+                            actionTitle = item.presentationData.strings.Conversation_RequestToJoinChannel
+                        case "telegram_chat_request", "telegram_megagroup_request":
+                            actionTitle = item.presentationData.strings.Conversation_RequestToJoinGroup
                         case "telegram_channel":
                             actionTitle = item.presentationData.strings.Conversation_ViewChannel
                         case "telegram_chat", "telegram_megagroup":
@@ -313,7 +321,7 @@ final class ChatMessageWebpageBubbleContentNode: ChatMessageBubbleContentNode {
                             break
                     }
                 }
-            } else if let _ = item.message.adAttribute {
+            } else if let adAttribute = item.message.adAttribute {
                 title = nil
                 subtitle = nil
                 text = item.message.text
@@ -334,9 +342,17 @@ final class ChatMessageWebpageBubbleContentNode: ChatMessageBubbleContentNode {
                 if let author = item.message.author as? TelegramUser, author.botInfo != nil {
                     actionTitle = item.presentationData.strings.Conversation_ViewBot
                 } else if let author = item.message.author as? TelegramChannel, case .group = author.info {
-                    actionTitle = item.presentationData.strings.Conversation_ViewGroup
+                    if adAttribute.messageId != nil {
+                        actionTitle = item.presentationData.strings.Conversation_ViewPost
+                    } else {
+                        actionTitle = item.presentationData.strings.Conversation_ViewGroup
+                    }
                 } else {
-                    actionTitle = item.presentationData.strings.Conversation_ViewChannel
+                    if adAttribute.messageId != nil {
+                        actionTitle = item.presentationData.strings.Conversation_ViewMessage
+                    } else {
+                        actionTitle = item.presentationData.strings.Conversation_ViewChannel
+                    }
                 }
                 displayLine = false
             }
@@ -528,6 +544,9 @@ final class ChatMessageWebpageBubbleContentNode: ChatMessageBubbleContentNode {
     }
     
     override func reactionTargetNode(value: String) -> (ASDisplayNode, ASDisplayNode)? {
-        return self.contentNode.reactionTargetNode(value: value)
+        if !self.contentNode.statusNode.isHidden {
+            return self.contentNode.statusNode.reactionNode(value: value)
+        }
+        return nil
     }
 }

@@ -138,7 +138,7 @@ class ThemeSettingsChatPreviewItemNode: ListViewItemNode {
         
         return { item, params, neighbors in
             if currentBackgroundNode == nil {
-                currentBackgroundNode = WallpaperBackgroundNode(context: item.context)
+                currentBackgroundNode = createWallpaperBackgroundNode(context: item.context, forChatDisplay: false)
             }
             currentBackgroundNode?.update(wallpaper: item.wallpaper)
             currentBackgroundNode?.updateBubbleTheme(bubbleTheme: item.componentTheme, bubbleCorners: item.chatBubbleCorners)
@@ -199,7 +199,7 @@ class ThemeSettingsChatPreviewItemNode: ListViewItemNode {
             for node in nodes {
                 contentSize.height += node.frame.size.height
             }
-            insets = itemListNeighborsGroupedInsets(neighbors)
+            insets = itemListNeighborsGroupedInsets(neighbors, params)
             
             let layout = ListViewItemNodeLayout(contentSize: contentSize, insets: insets)
             let layoutSize = layout.size

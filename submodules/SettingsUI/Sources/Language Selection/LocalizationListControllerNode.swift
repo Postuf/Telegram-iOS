@@ -275,7 +275,7 @@ private func preparedLanguageListNodeTransition(presentationData: PresentationDa
 final class LocalizationListControllerNode: ViewControllerTracingNode {
     private let context: AccountContext
     private var presentationData: PresentationData
-    private let navigationBar: NavigationBar
+    private weak var navigationBar: NavigationBar?
     private let requestActivateSearch: () -> Void
     private let requestDeactivateSearch: () -> Void
     private let present: (ViewController, Any?) -> Void
@@ -285,6 +285,8 @@ final class LocalizationListControllerNode: ViewControllerTracingNode {
     
     private var containerLayout: (ContainerViewLayout, CGFloat)?
     let listNode: ListView
+    private let leftOverlayNode: ASDisplayNode
+    private let rightOverlayNode: ASDisplayNode
     private var queuedTransitions: [LanguageListNodeTransition] = []
     private var searchDisplayController: SearchDisplayController?
     
@@ -312,10 +314,14 @@ final class LocalizationListControllerNode: ViewControllerTracingNode {
         self.present = present
 
         self.listNode = ListView()
-        self.listNode.keepTopItemOverscrollBackground = ListViewKeepTopItemOverscrollBackground(color: presentationData.theme.chatList.backgroundColor, direction: true)
+        self.listNode.keepTopItemOverscrollBackground = ListViewKeepTopItemOverscrollBackground(color: presentationData.theme.list.blocksBackgroundColor, direction: true)
         self.listNode.accessibilityPageScrolledString = { row, count in
             return presentationData.strings.VoiceOver_ScrollStatus(row, count).string
         }
+        self.leftOverlayNode = ASDisplayNode()
+        self.leftOverlayNode.backgroundColor = self.presentationData.theme.list.blocksBackgroundColor
+        self.rightOverlayNode = ASDisplayNode()
+        self.rightOverlayNode.backgroundColor = self.presentationData.theme.list.blocksBackgroundColor
         
         super.init()
         
@@ -338,9 +344,9 @@ final class LocalizationListControllerNode: ViewControllerTracingNode {
         let removeItem: (String) -> Void = { id in
             let _ = (context.account.postbox.transaction { transaction -> Signal<LocalizationInfo?, NoError> in
                 removeSavedLocalization(transaction: transaction, languageCode: id)
-                let state = transaction.getPreferencesEntry(key: PreferencesKeys.localizationListState) as? LocalizationListState
+                let state = transaction.getPreferencesEntry(key: PreferencesKeys.localizationListState)?.get(LocalizationListState.self)
                 return context.sharedContext.accountManager.transaction { transaction -> LocalizationInfo? in
-                    if let settings = transaction.getSharedData(SharedDataKeys.localizationSettings) as? LocalizationSettings, let state = state {
+                    if let settings = transaction.getSharedData(SharedDataKeys.localizationSettings)?.get(LocalizationSettings.self), let state = state {
                         if settings.primaryComponent.languageCode == id {
                             for item in state.availableOfficialLocalizations {
                                 if item.languageCode == "en" {
@@ -374,12 +380,12 @@ final class LocalizationListControllerNode: ViewControllerTracingNode {
                         
             var entries: [LanguageListEntry] = []
             var activeLanguageCode: String?
-            if let localizationSettings = sharedData.entries[SharedDataKeys.localizationSettings] as? LocalizationSettings {
+            if let localizationSettings = sharedData.entries[SharedDataKeys.localizationSettings]?.get(LocalizationSettings.self) {
                 activeLanguageCode = localizationSettings.primaryComponent.languageCode
             }
             var existingIds = Set<String>()
             
-            let localizationListState = (view.views[preferencesKey] as? PreferencesView)?.values[PreferencesKeys.localizationListState] as? LocalizationListState
+            let localizationListState = (view.views[preferencesKey] as? PreferencesView)?.values[PreferencesKeys.localizationListState]?.get(LocalizationListState.self)
             if let localizationListState = localizationListState, !localizationListState.availableOfficialLocalizations.isEmpty {
                 strongSelf.currentListState = localizationListState
                 
@@ -418,6 +424,14 @@ final class LocalizationListControllerNode: ViewControllerTracingNode {
             strongSelf.enqueueTransition(transition)
         })
         self.updatedDisposable = context.engine.localization.synchronizedLocalizationListState().start()
+        
+        self.listNode.itemNodeHitTest = { [weak self] point in
+            if let strongSelf = self {
+                return point.x > strongSelf.leftOverlayNode.frame.maxX && point.x < strongSelf.rightOverlayNode.frame.minX
+            } else {
+                return true
+            }
+        }
     }
     
     deinit {
@@ -432,6 +446,8 @@ final class LocalizationListControllerNode: ViewControllerTracingNode {
         self.backgroundColor = presentationData.theme.list.blocksBackgroundColor
         self.listNode.keepTopItemOverscrollBackground = ListViewKeepTopItemOverscrollBackground(color: presentationData.theme.chatList.backgroundColor, direction: true)
         self.searchDisplayController?.updatePresentationData(presentationData)
+        self.leftOverlayNode.backgroundColor = presentationData.theme.list.blocksBackgroundColor
+        self.rightOverlayNode.backgroundColor = presentationData.theme.list.blocksBackgroundColor
     }
     
     func containerLayoutUpdated(_ layout: ContainerViewLayout, navigationBarHeight: CGFloat, transition: ContainedViewLayoutTransition) {
@@ -440,8 +456,25 @@ final class LocalizationListControllerNode: ViewControllerTracingNode {
         
         var listInsets = layout.insets(options: [.input])
         listInsets.top += navigationBarHeight
-        listInsets.left += layout.safeInsets.left
-        listInsets.right += layout.safeInsets.right
+        if layout.size.width >= 375.0 {
+            let inset = max(16.0, floor((layout.size.width - 674.0) / 2.0))
+            listInsets.left += inset
+            listInsets.right += inset
+        } else {
+            listInsets.left += layout.safeInsets.left
+            listInsets.right += layout.safeInsets.right
+        }
+        
+        self.leftOverlayNode.frame = CGRect(x: 0.0, y: 0.0, width: listInsets.left, height: layout.size.height)
+        self.rightOverlayNode.frame = CGRect(x: layout.size.width - listInsets.right, y: 0.0, width: listInsets.right, height: layout.size.height)
+        
+        if self.leftOverlayNode.supernode == nil {
+            self.insertSubnode(self.leftOverlayNode, aboveSubnode: self.listNode)
+        }
+        if self.rightOverlayNode.supernode == nil {
+            self.insertSubnode(self.rightOverlayNode, aboveSubnode: self.listNode)
+        }
+        
         if let searchDisplayController = self.searchDisplayController {
             searchDisplayController.containerLayoutUpdated(layout, navigationBarHeight: navigationBarHeight, transition: transition)
         }
@@ -561,8 +594,8 @@ final class LocalizationListControllerNode: ViewControllerTracingNode {
             if let strongSelf = self, let strongPlaceholderNode = placeholderNode {
                 if isSearchBar {
                     strongPlaceholderNode.supernode?.insertSubnode(subnode, aboveSubnode: strongPlaceholderNode)
-                } else {
-                    strongSelf.insertSubnode(subnode, belowSubnode: strongSelf.navigationBar)
+                } else if let navigationBar = strongSelf.navigationBar  {
+                    strongSelf.insertSubnode(subnode, belowSubnode: navigationBar)
                 }
             }
         }, placeholder: placeholderNode)

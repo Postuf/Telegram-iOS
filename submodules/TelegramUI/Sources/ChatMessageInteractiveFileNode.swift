@@ -34,7 +34,7 @@ final class ChatMessageInteractiveFileNode: ASDisplayNode {
     private let waveformNode: AudioWaveformNode
     private let waveformForegroundNode: AudioWaveformNode
     private var waveformScrubbingNode: MediaPlayerScrubbingNode?
-    private let dateAndStatusNode: ChatMessageDateAndStatusNode
+    let dateAndStatusNode: ChatMessageDateAndStatusNode
     private let consumableContentNode: ASImageNode
     
     private var iconNode: TransformImageNode?
@@ -305,6 +305,7 @@ final class ChatMessageInteractiveFileNode: ASDisplayNode {
                     }
                     var viewCount: Int?
                     var dateReplies = 0
+                    let dateReactions: [MessageReaction] = mergedMessageReactions(attributes: message.attributes)?.reactions ?? []
                     for attribute in message.attributes {
                         if let attribute = attribute as? EditedMessageAttribute {
                             edited = !attribute.isHidden
@@ -320,20 +321,7 @@ final class ChatMessageInteractiveFileNode: ASDisplayNode {
                         edited = true
                     }
                     
-                    var dateReactions: [MessageReaction] = []
-                    var dateReactionCount = 0
-                    if let reactionsAttribute = mergedMessageReactions(attributes: message.attributes), !reactionsAttribute.reactions.isEmpty {
-                        for reaction in reactionsAttribute.reactions {
-                            if reaction.isSelected {
-                                dateReactions.insert(reaction, at: 0)
-                            } else {
-                                dateReactions.append(reaction)
-                            }
-                            dateReactionCount += Int(reaction.count)
-                        }
-                    }
-                    
-                    let dateText = stringForMessageTimestampStatus(accountPeerId: context.account.peerId, message: message, dateTimeFormat: presentationData.dateTimeFormat, nameDisplayOrder: presentationData.nameDisplayOrder, strings: presentationData.strings, reactionCount: dateReactionCount)
+                    let dateText = stringForMessageTimestampStatus(accountPeerId: context.account.peerId, message: message, dateTimeFormat: presentationData.dateTimeFormat, nameDisplayOrder: presentationData.nameDisplayOrder, strings: presentationData.strings)
                     
                     let (size, apply) = statusLayout(context, presentationData, edited, viewCount, dateText, statusType, constrainedSize, dateReactions, dateReplies, isPinned && !associatedData.isInPinnedListMode, message.isSelfExpiring)
                     statusSize = size
@@ -378,9 +366,7 @@ final class ChatMessageInteractiveFileNode: ASDisplayNode {
                             let durationString = stringForDuration(audioDuration)
                             candidateDescriptionString = NSAttributedString(string: durationString, font: durationFont, textColor: messageTheme.fileDurationColor)
                             if let waveform = waveform {
-                                waveform.withDataNoCopy { data in
-                                    audioWaveform = AudioWaveform(bitstream: data, bitsPerSample: 5)
-                                }
+                                audioWaveform = AudioWaveform(bitstream: waveform, bitsPerSample: 5)
                             }
                         } else {
                             candidateTitleString = NSAttributedString(string: title ?? (file.fileName ?? "Unknown Track"), font: titleFont, textColor: messageTheme.fileTitleColor)
@@ -941,7 +927,7 @@ final class ChatMessageInteractiveFileNode: ASDisplayNode {
                         }
                     }
                     
-                    image = playerAlbumArt(postbox: context.account.postbox, fileReference: .message(message: MessageReference(message), media: file), albumArt: .init(thumbnailResource: ExternalMusicAlbumArtResource(title: title ?? "", performer: performer ?? "", isThumbnail: true), fullSizeResource: ExternalMusicAlbumArtResource(title: title ?? "", performer: performer ?? "", isThumbnail: false)), thumbnail: true, overlayColor: UIColor(white: 0.0, alpha: 0.3), drawPlaceholderWhenEmpty: false, attemptSynchronously: !animated)
+                    image = playerAlbumArt(postbox: context.account.postbox, engine: context.engine, fileReference: .message(message: MessageReference(message), media: file), albumArt: .init(thumbnailResource: ExternalMusicAlbumArtResource(title: title ?? "", performer: performer ?? "", isThumbnail: true), fullSizeResource: ExternalMusicAlbumArtResource(title: title ?? "", performer: performer ?? "", isThumbnail: false)), thumbnail: true, overlayColor: UIColor(white: 0.0, alpha: 0.3), drawPlaceholderWhenEmpty: false, attemptSynchronously: !animated)
                 }
             }
             let statusNode = SemanticStatusNode(backgroundNodeColor: backgroundNodeColor, foregroundNodeColor: foregroundNodeColor, image: image, overlayForegroundNodeColor:  presentationData.theme.theme.chat.message.mediaOverlayControlColors.foregroundColor)
@@ -956,7 +942,7 @@ final class ChatMessageInteractiveFileNode: ASDisplayNode {
             statusNode.backgroundNodeColor = backgroundNodeColor
         }
         
-        if state != .none && isVoice && self.playbackAudioLevelNode == nil {
+        if case .pause = state, isVoice, self.playbackAudioLevelNode == nil {
             let blobFrame = progressFrame.insetBy(dx: -12.0, dy: -12.0)
             let playbackAudioLevelNode = VoiceBlobNode(
                 maxLevel: 0.3,
@@ -1136,13 +1122,6 @@ final class ChatMessageInteractiveFileNode: ASDisplayNode {
     private func stopTimer() {
         self.playerUpdateTimer?.invalidate()
         self.playerUpdateTimer = nil
-    }
-    
-    func reactionTargetNode(value: String) -> (ASDisplayNode, ASDisplayNode)? {
-        if !self.dateAndStatusNode.isHidden {
-            return self.dateAndStatusNode.reactionNode(value: value)
-        }
-        return nil
     }
 }
 

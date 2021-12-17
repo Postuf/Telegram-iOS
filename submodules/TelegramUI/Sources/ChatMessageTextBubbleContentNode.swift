@@ -65,13 +65,6 @@ class ChatMessageTextBubbleContentNode: ChatMessageBubbleContentNode {
         self.textAccessibilityOverlayNode.openUrl = { [weak self] url in
             self?.item?.controllerInteraction.openUrl(url, false, false, nil)
         }
-        
-        self.statusNode.openReactions = { [weak self] in
-            guard let strongSelf = self, let item = strongSelf.item else {
-                return
-            }
-            item.controllerInteraction.openMessageReactions(item.message.id)
-        }
     }
 
     required init?(coder aDecoder: NSCoder) {
@@ -114,6 +107,8 @@ class ChatMessageTextBubbleContentNode: ChatMessageBubbleContentNode {
                 }
                 var viewCount: Int?
                 var dateReplies = 0
+                let dateReactions: [MessageReaction] = mergedMessageReactions(attributes: item.message.attributes)?.reactions ?? []
+                
                 for attribute in item.message.attributes {
                     if let attribute = attribute as? EditedMessageAttribute {
                         edited = !attribute.isHidden
@@ -126,26 +121,13 @@ class ChatMessageTextBubbleContentNode: ChatMessageBubbleContentNode {
                     }
                 }
                 
-                var dateReactions: [MessageReaction] = []
-                var dateReactionCount = 0
-                if let reactionsAttribute = mergedMessageReactions(attributes: item.message.attributes), !reactionsAttribute.reactions.isEmpty {
-                    for reaction in reactionsAttribute.reactions {
-                        if reaction.isSelected {
-                            dateReactions.insert(reaction, at: 0)
-                        } else {
-                            dateReactions.append(reaction)
-                        }
-                        dateReactionCount += Int(reaction.count)
-                    }
-                }
-                
                 let dateFormat: MessageTimestampStatusFormat
                 if let subject = item.associatedData.subject, case .forwardedMessages = subject {
                     dateFormat = .minimal
                 } else {
                     dateFormat = .regular
                 }
-                let dateText = stringForMessageTimestampStatus(accountPeerId: item.context.account.peerId, message: item.message, dateTimeFormat: item.presentationData.dateTimeFormat, nameDisplayOrder: item.presentationData.nameDisplayOrder, strings: item.presentationData.strings, format: dateFormat, reactionCount: dateReactionCount)
+                let dateText = stringForMessageTimestampStatus(accountPeerId: item.context.account.peerId, message: item.message, dateTimeFormat: item.presentationData.dateTimeFormat, nameDisplayOrder: item.presentationData.nameDisplayOrder, strings: item.presentationData.strings, format: dateFormat)
                 
                 let statusType: ChatMessageDateAndStatusType?
                 var displayStatus = false
@@ -478,7 +460,23 @@ class ChatMessageTextBubbleContentNode: ChatMessageBubbleContentNode {
             } else if let pre = attributes[NSAttributedString.Key(rawValue: TelegramTextAttributes.Pre)] as? String {
                 return .copy(pre)
             } else {
-                return .none
+                if let item = self.item, item.message.text.count == 1, !item.presentationData.largeEmoji {
+                    let (emoji, fitz) = item.message.text.basicEmoji
+                    var emojiFile: TelegramMediaFile?
+                    
+                    emojiFile = item.associatedData.animatedEmojiStickers[emoji]?.first?.file
+                    if emojiFile == nil {
+                        emojiFile = item.associatedData.animatedEmojiStickers[emoji.strippedEmoji]?.first?.file
+                    }
+                    
+                    if let emojiFile = emojiFile {
+                        return .largeEmoji(emoji, fitz, emojiFile)
+                    } else {
+                        return .none
+                    }
+                } else {
+                    return .none
+                }
             }
         } else {
             if let _ = self.statusNode.hitTest(self.view.convert(point, to: self.statusNode.view), with: nil) {
@@ -598,7 +596,7 @@ class ChatMessageTextBubbleContentNode: ChatMessageBubbleContentNode {
     
     override func updateIsExtractedToContextPreview(_ value: Bool) {
         if value {
-            if self.textSelectionNode == nil, let item = self.item, let rootNode = item.controllerInteraction.chatControllerNode() {
+            if self.textSelectionNode == nil, let item = self.item, !item.associatedData.isCopyProtectionEnabled, let rootNode = item.controllerInteraction.chatControllerNode() {
                 let selectionColor: UIColor
                 let knobColor: UIColor
                 if item.message.effectivelyIncoming(item.context.account.peerId) {

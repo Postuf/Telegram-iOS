@@ -9,8 +9,6 @@ import TelegramPresentationData
 import AccountContext
 import AppBundle
 
-private let reactionCountFont = Font.semibold(11.0)
-
 private func maybeAddRotationAnimation(_ layer: CALayer, duration: Double) {
     if let _ = layer.animation(forKey: "clockFrameAnimation") {
         return
@@ -42,58 +40,49 @@ enum ChatMessageDateAndStatusType: Equatable {
     case FreeOutgoing(ChatMessageDateAndStatusOutgoingType)
 }
 
+private let reactionCountFont = Font.semibold(11.0)
 private let reactionFont = Font.regular(12.0)
 
 private final class StatusReactionNode: ASDisplayNode {
-    let emptyImageNode: ASImageNode
     let selectedImageNode: ASImageNode
     
     private var theme: PresentationTheme?
+    private var value: String?
     private var isSelected: Bool?
     
     override init() {
-        self.emptyImageNode = ASImageNode()
-        self.emptyImageNode.displaysAsynchronously = false
         self.selectedImageNode = ASImageNode()
         self.selectedImageNode.displaysAsynchronously = false
         
         super.init()
         
-        self.addSubnode(self.emptyImageNode)
         self.addSubnode(self.selectedImageNode)
     }
     
-    func update(type: ChatMessageDateAndStatusType, isSelected: Bool, count: Int, theme: PresentationTheme, wallpaper: TelegramWallpaper, animated: Bool) {
-        if self.theme !== theme {
-            self.theme = theme
+    func update(type: ChatMessageDateAndStatusType, value: String, isSelected: Bool, count: Int, theme: PresentationTheme, wallpaper: TelegramWallpaper, animated: Bool) {
+        if self.value != value {
+            self.value = value
             
-            let emptyImage: UIImage?
-            let selectedImage: UIImage?
-            switch type {
-            case .BubbleIncoming:
-                emptyImage = PresentationResourcesChat.chatMessageLike(theme, incoming: true, isSelected: false)
-                selectedImage = PresentationResourcesChat.chatMessageLike(theme, incoming: true, isSelected: true)
-            case .BubbleOutgoing:
-                emptyImage = PresentationResourcesChat.chatMessageLike(theme, incoming: false, isSelected: false)
-                selectedImage = PresentationResourcesChat.chatMessageLike(theme, incoming: false, isSelected: true)
-            case .ImageIncoming, .ImageOutgoing:
-                emptyImage = PresentationResourcesChat.chatMessageMediaLike(theme, isSelected: false)
-                selectedImage = PresentationResourcesChat.chatMessageMediaLike(theme, isSelected: true)
-            case .FreeIncoming, .FreeOutgoing:
-                emptyImage = PresentationResourcesChat.chatMessageFreeLike(theme, wallpaper: wallpaper, isSelected: false)
-                selectedImage = PresentationResourcesChat.chatMessageFreeLike(theme, wallpaper: wallpaper, isSelected: true)
-            }
-            
-            if let emptyImage = emptyImage, let selectedImage = selectedImage {
-                self.emptyImageNode.image = emptyImage
-                self.emptyImageNode.frame = CGRect(origin: CGPoint(x: 0.0, y: 0.0), size: emptyImage.size)
+            let selectedImage: UIImage? = generateImage(CGSize(width: 14.0, height: 14.0), rotatedContext: { size, context in
+                UIGraphicsPushContext(context)
                 
+                context.clear(CGRect(origin: CGPoint(), size: size))
+                
+                context.scaleBy(x: size.width / 20.0, y: size.width / 20.0)
+                
+                let string = NSAttributedString(string: value, font: reactionFont, textColor: .black)
+                string.draw(at: CGPoint(x: 1.0, y: 2.0))
+                
+                UIGraphicsPopContext()
+            })
+            
+            if let selectedImage = selectedImage {
                 self.selectedImageNode.image = selectedImage
                 self.selectedImageNode.frame = CGRect(origin: CGPoint(x: 0.0, y: 0.0), size: selectedImage.size)
             }
         }
         
-        if self.isSelected != isSelected {
+        /*if self.isSelected != isSelected {
             let wasSelected = self.isSelected
             self.isSelected = isSelected
             
@@ -144,9 +133,10 @@ private final class StatusReactionNode: ASDisplayNode {
                     }
                 }
             }
-        }
+        }*/
     }
 }
+
 
 class ChatMessageDateAndStatusNode: ASDisplayNode {
     private var backgroundNode: ASImageNode?
@@ -169,8 +159,7 @@ class ChatMessageDateAndStatusNode: ASDisplayNode {
     private var layoutSize: CGSize?
     
     private var tapGestureRecognizer: UITapGestureRecognizer?
-    
-    var openReactions: (() -> Void)?
+
     var openReplies: (() -> Void)?
     var pressed: (() -> Void)? {
         didSet {
@@ -217,9 +206,9 @@ class ChatMessageDateAndStatusNode: ASDisplayNode {
         
         let currentType = self.type
         let currentTheme = self.theme
-        
-        let makeReactionCountLayout = TextNode.asyncLayout(self.reactionCountNode)
+
         let makeReplyCountLayout = TextNode.asyncLayout(self.replyCountNode)
+        let makeReactionCountLayout = TextNode.asyncLayout(self.reactionCountNode)
         
         let previousLayoutSize = self.layoutSize
         
@@ -526,13 +515,14 @@ class ChatMessageDateAndStatusNode: ASDisplayNode {
             } else if blurredBackgroundColor != nil {
                 backgroundInsets = UIEdgeInsets(top: 2.0, left: 7.0, bottom: 2.0, right: 7.0)
             }
+
+            var replyCountLayoutAndApply: (TextNodeLayout, () -> TextNode)?
             
             let reactionSize: CGFloat = 14.0
             var reactionCountLayoutAndApply: (TextNodeLayout, () -> TextNode)?
-            var replyCountLayoutAndApply: (TextNodeLayout, () -> TextNode)?
-            
             let reactionSpacing: CGFloat = -4.0
             let reactionTrailingSpacing: CGFloat = 4.0
+
             var reactionInset: CGFloat = 0.0
             if !reactions.isEmpty {
                 reactionInset = -1.0 + CGFloat(reactions.count) * reactionSize + CGFloat(reactions.count - 1) * reactionSpacing + reactionTrailingSpacing
@@ -758,7 +748,7 @@ class ChatMessageDateAndStatusNode: ASDisplayNode {
                             }
                         }
                         
-                        node.update(type: type, isSelected: reactions[i].isSelected, count: Int(reactions[i].count), theme: presentationData.theme.theme, wallpaper: presentationData.theme.wallpaper, animated: false)
+                        node.update(type: type, value: reactions[i].value, isSelected: reactions[i].isSelected, count: Int(reactions[i].count), theme: presentationData.theme.theme, wallpaper: presentationData.theme.wallpaper, animated: false)
                         if node.supernode == nil {
                             strongSelf.addSubnode(node)
                             if animated {
@@ -797,7 +787,7 @@ class ChatMessageDateAndStatusNode: ASDisplayNode {
                             }
                         }
                         node.frame = CGRect(origin: CGPoint(x: reactionOffset + 1.0, y: backgroundInsets.top + 1.0 + offset), size: layout.size)
-                        reactionOffset += 1.0 + layout.size.width
+                        reactionOffset += 1.0 + layout.size.width + 4.0
                     } else if let reactionCountNode = strongSelf.reactionCountNode {
                         strongSelf.reactionCountNode = nil
                         if animated {
@@ -865,34 +855,6 @@ class ChatMessageDateAndStatusNode: ASDisplayNode {
                             replyCountNode.removeFromSupernode()
                         }
                     }
-                    
-                    /*if !strongSelf.reactionNodes.isEmpty {
-                        if strongSelf.reactionButtonNode == nil {
-                            let reactionButtonNode = HighlightTrackingButtonNode()
-                            strongSelf.reactionButtonNode = reactionButtonNode
-                            strongSelf.addSubnode(reactionButtonNode)
-                            reactionButtonNode.addTarget(strongSelf, action: #selector(strongSelf.reactionButtonPressed), forControlEvents: .touchUpInside)
-                            reactionButtonNode.highligthedChanged = { [weak strongSelf] highlighted in
-                                guard let strongSelf = strongSelf else {
-                                    return
-                                }
-                                if highlighted {
-                                    for itemNode in strongSelf.reactionNodes {
-                                        itemNode.alpha = 0.4
-                                    }
-                                } else {
-                                    for itemNode in strongSelf.reactionNodes {
-                                        itemNode.alpha = 1.0
-                                        itemNode.layer.animateAlpha(from: 0.4, to: 1.0, duration: 0.3)
-                                    }
-                                }
-                            }
-                        }
-                        strongSelf.reactionButtonNode?.frame = CGRect(origin: CGPoint(x: leftInset - reactionInset + backgroundInsets.left - 5.0, y: backgroundInsets.top + 1.0 + offset - 5.0), size: CGSize(width: reactionOffset + 5.0 * 2.0, height: 20.0))
-                    } else if let reactionButtonNode = strongSelf.reactionButtonNode {
-                        strongSelf.reactionButtonNode = nil
-                        reactionButtonNode.removeFromSupernode()
-                    }*/
                 }
             })
         }
@@ -920,21 +882,12 @@ class ChatMessageDateAndStatusNode: ASDisplayNode {
     
     func reactionNode(value: String) -> (ASDisplayNode, ASDisplayNode)? {
         for node in self.reactionNodes {
-            return (node.emptyImageNode, node.selectedImageNode)
+            return (node.selectedImageNode, node.selectedImageNode)
         }
         return nil
     }
     
-    @objc private func reactionButtonPressed() {
-        self.openReactions?()
-    }
-    
     override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
-        if let reactionButtonNode = self.reactionButtonNode {
-            if reactionButtonNode.frame.contains(point) {
-                return reactionButtonNode.view
-            }
-        }
         if self.pressed != nil {
             if self.bounds.contains(point) {
                 return self.view

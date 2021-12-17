@@ -141,6 +141,9 @@ final class ChatMessageGameBubbleContentNode: ChatMessageBubbleContentNode {
     }
     
     override func reactionTargetNode(value: String) -> (ASDisplayNode, ASDisplayNode)? {
-        return self.contentNode.reactionTargetNode(value: value)
+        if !self.contentNode.statusNode.isHidden {
+            return self.contentNode.statusNode.reactionNode(value: value)
+        }
+        return nil
     }
 }

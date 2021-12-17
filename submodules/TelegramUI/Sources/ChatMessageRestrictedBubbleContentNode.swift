@@ -53,6 +53,7 @@ class ChatMessageRestrictedBubbleContentNode: ChatMessageBubbleContentNode {
                 var viewCount: Int?
                 var rawText = ""
                 var dateReplies = 0
+                let dateReactions: [MessageReaction] = mergedMessageReactions(attributes: item.message.attributes)?.reactions ?? []
                 for attribute in item.message.attributes {
                     if let attribute = attribute as? EditedMessageAttribute {
                         edited = !attribute.isHidden
@@ -67,20 +68,7 @@ class ChatMessageRestrictedBubbleContentNode: ChatMessageBubbleContentNode {
                     }
                 }
                 
-                var dateReactions: [MessageReaction] = []
-                var dateReactionCount = 0
-                if let reactionsAttribute = mergedMessageReactions(attributes: item.message.attributes), !reactionsAttribute.reactions.isEmpty {
-                    for reaction in reactionsAttribute.reactions {
-                        if reaction.isSelected {
-                            dateReactions.insert(reaction, at: 0)
-                        } else {
-                            dateReactions.append(reaction)
-                        }
-                        dateReactionCount += Int(reaction.count)
-                    }
-                }
-                
-                let dateText = stringForMessageTimestampStatus(accountPeerId: item.context.account.peerId, message: item.message, dateTimeFormat: item.presentationData.dateTimeFormat, nameDisplayOrder: item.presentationData.nameDisplayOrder, strings: item.presentationData.strings, reactionCount: dateReactionCount)
+                let dateText = stringForMessageTimestampStatus(accountPeerId: item.context.account.peerId, message: item.message, dateTimeFormat: item.presentationData.dateTimeFormat, nameDisplayOrder: item.presentationData.nameDisplayOrder, strings: item.presentationData.strings)
                 
                 let statusType: ChatMessageDateAndStatusType?
                 switch position {
@@ -251,12 +239,5 @@ class ChatMessageRestrictedBubbleContentNode: ChatMessageBubbleContentNode {
     override func animateRemoved(_ currentTimestamp: Double, duration: Double) {
         self.textNode.layer.animateAlpha(from: 1.0, to: 0.0, duration: 0.2, removeOnCompletion: false)
         self.statusNode.layer.animateAlpha(from: 1.0, to: 0.0, duration: 0.2, removeOnCompletion: false)
-    }
-    
-    override func reactionTargetNode(value: String) -> (ASDisplayNode, ASDisplayNode)? {
-        if !self.statusNode.isHidden {
-            return self.statusNode.reactionNode(value: value)
-        }
-        return nil
     }
 }

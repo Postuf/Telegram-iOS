@@ -389,6 +389,17 @@ public extension ContainedViewLayoutTransition {
         }
     }
     
+    func animatePositionWithKeyframes(node: ASDisplayNode, keyframes: [AnyObject], removeOnCompletion: Bool = true, additive: Bool = false, completion: ((Bool) -> Void)? = nil) {
+        switch self {
+        case .immediate:
+            completion?(true)
+        case let .animated(duration, curve):
+            node.layer.animateKeyframes(values: keyframes, duration: duration, keyPath: "position", timingFunction: curve.timingFunction, mediaTimingFunction: curve.mediaTimingFunction, removeOnCompletion: removeOnCompletion, completion: { value in
+                completion?(value)
+            })
+        }
+    }
+    
     func animateFrame(node: ASDisplayNode, from frame: CGRect, to toFrame: CGRect? = nil, removeOnCompletion: Bool = true, additive: Bool = false, completion: ((Bool) -> Void)? = nil) {
         switch self {
             case .immediate:
@@ -862,6 +873,36 @@ public extension ContainedViewLayoutTransition {
                 if let completion = completion {
                     completion(result)
                 }
+            })
+        }
+    }
+
+    func updateTransform(node: ASDisplayNode, transform: CGAffineTransform, beginWithCurrentState: Bool = false, delay: Double = 0.0, completion: ((Bool) -> Void)? = nil) {
+        let transform = CATransform3DMakeAffineTransform(transform)
+
+        if CATransform3DEqualToTransform(node.layer.transform, transform) {
+            if let completion = completion {
+                completion(true)
+            }
+            return
+        }
+
+        switch self {
+        case .immediate:
+            node.layer.transform = transform
+            if let completion = completion {
+                completion(true)
+            }
+        case let .animated(duration, curve):
+            let previousTransform: CATransform3D
+            if beginWithCurrentState, let presentation = node.layer.presentation() {
+                previousTransform = presentation.transform
+            } else {
+                previousTransform = node.layer.transform
+            }
+            node.layer.transform = transform
+            node.layer.animate(from: NSValue(caTransform3D: previousTransform), to: NSValue(caTransform3D: transform), keyPath: "transform", timingFunction: curve.timingFunction, duration: duration, mediaTimingFunction: curve.mediaTimingFunction, completion: { value in
+                completion?(value)
             })
         }
     }

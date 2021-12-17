@@ -389,7 +389,7 @@ public func makeDefaultDarkPresentationTheme(extendingThemeReference: Presentati
             controlColor: UIColor(rgb: 0x98989e)
         ),
         mediaPlaceholderColor: UIColor(rgb: 0xffffff).mixedWith(UIColor(rgb: 0x1c1c1d), alpha: 0.9),
-        scrollIndicatorColor: UIColor(rgb: 0xffffff, alpha: 0.3),
+        scrollIndicatorColor: UIColor(rgb: 0xffffff, alpha: 0.5),
         pageIndicatorInactiveColor: UIColor(white: 1.0, alpha: 0.3),
         inputClearButtonColor: UIColor(rgb: 0x8b9197),
         itemBarChart: PresentationThemeItemBarChart(color1: UIColor(rgb: 0xffffff), color2: UIColor(rgb: 0x929196), color3: UIColor(rgb: 0x333333)),
@@ -569,7 +569,7 @@ public func makeDefaultDarkPresentationTheme(extendingThemeReference: Presentati
         itemBackgroundColor: UIColor(rgb: 0x000000, alpha: 0.0),
         itemHighlightedBackgroundColor: UIColor(rgb: 0xffffff, alpha: 0.15),
         primaryColor: UIColor(rgb: 0xffffff, alpha: 1.0),
-        secondaryColor: UIColor(rgb: 0xffffff, alpha: 0.48),
+        secondaryColor: UIColor(rgb: 0xffffff, alpha: 0.5),
         destructiveColor: UIColor(rgb: 0xeb5545),
         badgeFillColor: UIColor(rgb: 0xffffff),
         badgeForegroundColor: UIColor(rgb: 0x000000),

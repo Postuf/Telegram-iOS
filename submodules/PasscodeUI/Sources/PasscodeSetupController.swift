@@ -57,6 +57,8 @@ public final class PasscodeSetupController: ViewController {
         self.displayNode = PasscodeSetupControllerNode(presentationData: self.presentationData, mode: self.mode, isChangeModeAllowed: isChangeModeAllowed)
         self.displayNodeDidLoad()
         
+        self.navigationBar?.updateBackgroundAlpha(0.0, transition: .immediate)
+        
         self.controllerNode.selectPasscodeMode = { [weak self] in
             guard let strongSelf = self, case let .setup(change, type) = strongSelf.mode else {
                 return

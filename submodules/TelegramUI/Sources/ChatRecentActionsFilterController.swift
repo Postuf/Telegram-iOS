@@ -206,7 +206,7 @@ private enum ChatRecentActionsFilterEntry: ItemListNodeEntry {
                     case .member:
                         peerText = strings.ChatAdmins_AdminLabel.capitalized
                 }
-                return ItemListPeerItem(presentationData: presentationData, dateTimeFormat: dateTimeFormat, nameDisplayOrder: nameDisplayOrder, context: arguments.context, peer: participant.peer, presence: nil, text: .text(peerText, .secondary), label: .none, editing: ItemListPeerItemEditing(editable: false, editing: false, revealed: false), switchValue: ItemListPeerItemSwitch(value: checked, style: .check), enabled: true, selectable: true, sectionId: self.section, action: {
+                return ItemListPeerItem(presentationData: presentationData, dateTimeFormat: dateTimeFormat, nameDisplayOrder: nameDisplayOrder, context: arguments.context, peer: EnginePeer(participant.peer), presence: nil, text: .text(peerText, .secondary), label: .none, editing: ItemListPeerItemEditing(editable: false, editing: false, revealed: false), switchValue: ItemListPeerItemSwitch(value: checked, style: .check), enabled: true, selectable: true, sectionId: self.section, action: {
                     arguments.toggleAdmin(participant.peer.id)
                 }, setPeerIdWithRevealedOptions: { _, _ in
                 }, removePeer: { _ in })
@@ -277,6 +277,7 @@ private func channelRecentActionsFilterControllerEntries(presentationData: Prese
             ([.invites], presentationData.strings.Channel_AdminLogFilter_EventsInviteLinks),
             ([.deleteMessages], presentationData.strings.Channel_AdminLogFilter_EventsDeletedMessages),
             ([.editMessages], presentationData.strings.Channel_AdminLogFilter_EventsEditedMessages),
+            ([.sendMessages], presentationData.strings.Channel_AdminLogFilter_EventsSentMessages),
             ([.pinnedMessages], presentationData.strings.Channel_AdminLogFilter_EventsPinned),
             ([.leave], presentationData.strings.Channel_AdminLogFilter_EventsLeaving),
             ([.calls], presentationData.strings.Channel_AdminLogFilter_EventsLiveStreams)

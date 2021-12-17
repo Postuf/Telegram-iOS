@@ -1024,6 +1024,7 @@ class ChatMessagePollBubbleContentNode: ChatMessageBubbleContentNode {
                 }
                 var viewCount: Int?
                 var dateReplies = 0
+                let dateReactions: [MessageReaction] = mergedMessageReactions(attributes: item.message.attributes)?.reactions ?? []
                 for attribute in item.message.attributes {
                     if let attribute = attribute as? EditedMessageAttribute {
                         edited = !attribute.isHidden
@@ -1036,20 +1037,7 @@ class ChatMessagePollBubbleContentNode: ChatMessageBubbleContentNode {
                     }
                 }
                 
-                var dateReactions: [MessageReaction] = []
-                var dateReactionCount = 0
-                if let reactionsAttribute = mergedMessageReactions(attributes: item.message.attributes), !reactionsAttribute.reactions.isEmpty {
-                    for reaction in reactionsAttribute.reactions {
-                        if reaction.isSelected {
-                            dateReactions.insert(reaction, at: 0)
-                        } else {
-                            dateReactions.append(reaction)
-                        }
-                        dateReactionCount += Int(reaction.count)
-                    }
-                }
-                
-                let dateText = stringForMessageTimestampStatus(accountPeerId: item.context.account.peerId, message: item.message, dateTimeFormat: item.presentationData.dateTimeFormat, nameDisplayOrder: item.presentationData.nameDisplayOrder, strings: item.presentationData.strings, reactionCount: dateReactionCount)
+                let dateText = stringForMessageTimestampStatus(accountPeerId: item.context.account.peerId, message: item.message, dateTimeFormat: item.presentationData.dateTimeFormat, nameDisplayOrder: item.presentationData.nameDisplayOrder, strings: item.presentationData.strings)
                 
                 let statusType: ChatMessageDateAndStatusType?
                 switch position {
@@ -1744,13 +1732,6 @@ class ChatMessagePollBubbleContentNode: ChatMessageBubbleContentNode {
         }
     }
     
-    override func reactionTargetNode(value: String) -> (ASDisplayNode, ASDisplayNode)? {
-        if !self.statusNode.isHidden {
-            return self.statusNode.reactionNode(value: value)
-        }
-        return nil
-    }
-    
     func updatePollTooltipMessageState(animated: Bool) {
         guard let item = self.item else {
             return
@@ -1766,6 +1747,13 @@ class ChatMessagePollBubbleContentNode: ChatMessageBubbleContentNode {
             transition.updateAlpha(node: self.solutionButtonNode.iconNode, alpha: displaySolutionButton ? 1.0 : 0.0)
             transition.updateSublayerTransformScale(node: self.solutionButtonNode, scale: displaySolutionButton ? 1.0 : 0.1)
         }
+    }
+    
+    override func reactionTargetNode(value: String) -> (ASDisplayNode, ASDisplayNode)? {
+        if !self.statusNode.isHidden {
+            return self.statusNode.reactionNode(value: value)
+        }
+        return nil
     }
 }
 

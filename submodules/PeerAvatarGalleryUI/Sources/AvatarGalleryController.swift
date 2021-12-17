@@ -76,12 +76,12 @@ public enum AvatarGalleryEntry: Equatable {
         switch self {
         case let .topImage(representations, _, _, _, _, _):
             if let last = representations.last {
-                return .resource(last.representation.resource.id.uniqueId)
+                return .resource(last.representation.resource.id.stringRepresentation)
             }
             return .topImage
         case let .image(id, _, representations, _, _, _, _, _, _, _):
             if let last = representations.last {
-                return .resource(last.representation.resource.id.uniqueId)
+                return .resource(last.representation.resource.id.stringRepresentation)
             }
             return .image(id)
         }
@@ -670,7 +670,7 @@ public class AvatarGalleryController: ViewController, StandalonePresentableContr
             self.galleryNode.setControlsHidden(false, animated: false)
             if let presentationArguments = self.presentationArguments as? AvatarGalleryControllerPresentationArguments {
                 if presentationArguments.animated {
-                    self.galleryNode.animateIn(animateContent: !nodeAnimatesItself)
+                    self.galleryNode.animateIn(animateContent: !nodeAnimatesItself, useSimpleAnimation: false)
                 }
             }
         }

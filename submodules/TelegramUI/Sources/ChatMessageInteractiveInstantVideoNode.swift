@@ -50,7 +50,7 @@ class ChatMessageInteractiveInstantVideoNode: ASDisplayNode {
 
     private var durationBackgroundNode: NavigationBackgroundNode?
     private var durationNode: ChatInstantVideoMessageDurationNode?
-    private let dateAndStatusNode: ChatMessageDateAndStatusNode
+    let dateAndStatusNode: ChatMessageDateAndStatusNode
     
     private let infoBackgroundNode: ASImageNode
     private let muteIconNode: ASImageNode
@@ -179,14 +179,14 @@ class ChatMessageInteractiveInstantVideoNode: ASDisplayNode {
                 if let file = media as? TelegramMediaFile {
                     updatedFile = file
                     if let previousFile = previousFile {
-                        updatedMedia = !previousFile.resource.id.isEqual(to: file.resource.id)
+                        updatedMedia = previousFile.resource.id != file.resource.id
                     } else if previousFile == nil {
                         updatedMedia = true
                     }
                 } else if let webPage = media as? TelegramMediaWebpage, case let .Loaded(content) = webPage.content, let file = content.file {
                     updatedFile = file
                     if let previousFile = previousFile {
-                        updatedMedia = !previousFile.resource.id.isEqual(to: file.resource.id)
+                        updatedMedia = previousFile.resource.id != file.resource.id
                     } else if previousFile == nil {
                         updatedMedia = true
                     }
@@ -262,6 +262,7 @@ class ChatMessageInteractiveInstantVideoNode: ASDisplayNode {
             let sentViaBot = false
             var viewCount: Int? = nil
             var dateReplies = 0
+            let dateReactions: [MessageReaction] = mergedMessageReactions(attributes: item.message.attributes)?.reactions ?? []
             for attribute in item.message.attributes {
                 if let attribute = attribute as? EditedMessageAttribute {
                    edited = !attribute.isHidden
@@ -274,20 +275,7 @@ class ChatMessageInteractiveInstantVideoNode: ASDisplayNode {
                 }
             }
             
-            var dateReactions: [MessageReaction] = []
-            var dateReactionCount = 0
-            if let reactionsAttribute = mergedMessageReactions(attributes: item.message.attributes), !reactionsAttribute.reactions.isEmpty {
-                for reaction in reactionsAttribute.reactions {
-                    if reaction.isSelected {
-                        dateReactions.insert(reaction, at: 0)
-                    } else {
-                        dateReactions.append(reaction)
-                    }
-                    dateReactionCount += Int(reaction.count)
-                }
-            }
-            
-            let dateText = stringForMessageTimestampStatus(accountPeerId: item.context.account.peerId, message: item.message, dateTimeFormat: item.presentationData.dateTimeFormat, nameDisplayOrder: item.presentationData.nameDisplayOrder, strings: item.presentationData.strings, format: .regular, reactionCount: dateReactionCount)
+            let dateText = stringForMessageTimestampStatus(accountPeerId: item.context.account.peerId, message: item.message, dateTimeFormat: item.presentationData.dateTimeFormat, nameDisplayOrder: item.presentationData.nameDisplayOrder, strings: item.presentationData.strings, format: .regular)
             
             let maxDateAndStatusWidth: CGFloat
             if case .bubble = statusDisplayType {
@@ -440,7 +428,7 @@ class ChatMessageInteractiveInstantVideoNode: ASDisplayNode {
                                         }
                                     }
                                 }
-                            }), content: NativeVideoContent(id: .message(item.message.stableId, telegramFile.fileId), fileReference: .message(message: MessageReference(item.message), media: telegramFile), streamVideo: streamVideo ? .conservative : .none, enableSound: false, fetchAutomatically: false), priority: .embedded, autoplay: true)
+                            }), content: NativeVideoContent(id: .message(item.message.stableId, telegramFile.fileId), fileReference: .message(message: MessageReference(item.message), media: telegramFile), streamVideo: streamVideo ? .conservative : .none, enableSound: false, fetchAutomatically: false, captureProtected: item.message.isCopyProtected()), priority: .embedded, autoplay: true)
                             let previousVideoNode = strongSelf.videoNode
                             strongSelf.videoNode = videoNode
                             strongSelf.insertSubnode(videoNode, belowSubnode: previousVideoNode ?? strongSelf.dateAndStatusNode)

@@ -162,6 +162,9 @@ class ChatMessageFileBubbleContentNode: ChatMessageBubbleContentNode {
     }
     
     override func reactionTargetNode(value: String) -> (ASDisplayNode, ASDisplayNode)? {
-        return self.interactiveFileNode.reactionTargetNode(value: value)
+        if !self.interactiveFileNode.dateAndStatusNode.isHidden {
+            return self.interactiveFileNode.dateAndStatusNode.reactionNode(value: value)
+        }
+        return nil
     }
 }

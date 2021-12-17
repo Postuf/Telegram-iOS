@@ -225,9 +225,9 @@ public final class TelegramRootController: NavigationController {
         _ = (self.context.sharedContext.accountManager.transaction { transaction in
             transaction.removeAuth()
         } |> deliverOnMainQueue).start(completed: { [weak self] in
-            guard let strongSelf = self else { return }
+            guard let self = self else { return }
             
-            strongSelf.popViewController(animated: true)
+            _ = self.popViewController(animated: true)
         })
     }
 }

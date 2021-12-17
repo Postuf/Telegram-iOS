@@ -8,6 +8,23 @@ import GZip
 import YuvConversion
 import MediaResources
 
+public extension EmojiFitzModifier {
+    var lottieFitzModifier: LottieFitzModifier {
+        switch self {
+        case .type12:
+            return .type12
+        case .type3:
+            return .type3
+        case .type4:
+            return .type4
+        case .type5:
+            return .type5
+        case .type6:
+            return .type6
+        }
+    }
+}
+
 private let sharedQueue = Queue()
 private let sharedStoreQueue = Queue.concurrentDefaultQueue()
 
@@ -81,6 +98,7 @@ public final class AnimatedStickerFrame {
         self.type = type
         self.width = width
         self.height = height
+        assert(bytesPerRow > 0)
         self.bytesPerRow = bytesPerRow
         self.index = index
         self.isLastFrame = isLastFrame
@@ -665,7 +683,7 @@ private final class AnimatedStickerDirectFrameSource: AnimatedStickerFrameSource
         let rawData = TGGUnzipData(data, 8 * 1024 * 1024) ?? data
         let decompressedData = transformedWithFitzModifier(data: rawData, fitzModifier: fitzModifier)
         
-        guard let animation = LottieInstance(data: decompressedData, cacheKey: "") else {
+        guard let animation = LottieInstance(data: decompressedData, fitzModifier: fitzModifier?.lottieFitzModifier ?? .none, cacheKey: "") else {
             return nil
         }
         self.animation = animation
@@ -687,7 +705,7 @@ private final class AnimatedStickerDirectFrameSource: AnimatedStickerFrameSource
         self.currentFrame += 1
         if draw {
             if let cache = self.cache, let yuvData = cache.readUncompressedYuvFrame(index: frameIndex) {
-                return AnimatedStickerFrame(data: yuvData, type: .yuva, width: self.width, height: self.height, bytesPerRow: 0, index: frameIndex, isLastFrame: frameIndex == self.frameCount - 1, totalFrames: self.frameCount)
+                return AnimatedStickerFrame(data: yuvData, type: .yuva, width: self.width, height: self.height, bytesPerRow: self.width * 2, index: frameIndex, isLastFrame: frameIndex == self.frameCount - 1, totalFrames: self.frameCount)
             } else {
                 var frameData = Data(count: self.bytesPerRow * self.height)
                 frameData.withUnsafeMutableBytes { buffer -> Void in
@@ -979,14 +997,16 @@ public final class AnimatedStickerNode: ASDisplayNode {
     private var isSetUpForPlayback = false
         
     public func play(firstFrame: Bool = false, fromIndex: Int? = nil) {
-        switch self.playbackMode {
-        case .once:
-            self.isPlaying = true
-        case .count:
-            self.currentLoopCount = 0
-            self.isPlaying = true
-        default:
-            break
+        if !firstFrame {
+            switch self.playbackMode {
+            case .once:
+                self.isPlaying = true
+            case .count:
+                self.currentLoopCount = 0
+                self.isPlaying = true
+            default:
+                break
+            }
         }
         if self.isSetUpForPlayback {
             let directData = self.directData
@@ -995,7 +1015,7 @@ public final class AnimatedStickerNode: ASDisplayNode {
             let timerHolder = self.timer
             let frameSourceHolder = self.frameSource
             self.queue.async { [weak self] in
-                var maybeFrameSource: AnimatedStickerFrameSource? = frameSourceHolder.with { $0 }?.syncWith { $0 }?.value
+                var maybeFrameSource: AnimatedStickerFrameSource? = frameSourceHolder.with { $0 }?.syncWith { $0 }.value
                 if maybeFrameSource == nil {
                     let notifyUpdated: (() -> Void)? = nil
                     if let directData = directData {
@@ -1028,10 +1048,10 @@ public final class AnimatedStickerNode: ASDisplayNode {
                 let frameRate = frameSource.frameRate
                 
                 let timer = SwiftSignalKit.Timer(timeout: 1.0 / Double(frameRate), repeat: !firstFrame, completion: {
-                    let maybeFrame = frameQueue.syncWith { frameQueue in
+                    let frame = frameQueue.syncWith { frameQueue in
                         return frameQueue.take(draw: true)
                     }
-                    if let maybeFrame = maybeFrame, let frame = maybeFrame {
+                    if let frame = frame {
                         Queue.mainQueue().async {
                             guard let strongSelf = self else {
                                 return
@@ -1140,14 +1160,16 @@ public final class AnimatedStickerNode: ASDisplayNode {
                 let frameRate = frameSource.frameRate
                 
                 let timer = SwiftSignalKit.Timer(timeout: 1.0 / Double(frameRate), repeat: !firstFrame, completion: {
-                    let maybeFrame = frameQueue.syncWith { frameQueue in
+                    let frame = frameQueue.syncWith { frameQueue in
                         return frameQueue.take(draw: true)
                     }
-                    if let maybeFrame = maybeFrame, let frame = maybeFrame {
+                    if let frame = frame {
                         Queue.mainQueue().async {
                             guard let strongSelf = self else {
                                 return
                             }
+
+                            assert(frame.bytesPerRow != 0)
                             
                             strongSelf.renderer?.render(queue: strongSelf.queue, width: frame.width, height: frame.height, bytesPerRow: frame.bytesPerRow, data: frame.data, type: frame.type, completion: {
                                 guard let strongSelf = self else {
@@ -1255,7 +1277,7 @@ public final class AnimatedStickerNode: ASDisplayNode {
         let frameSourceHolder = self.frameSource
         let timerHolder = self.timer
         self.queue.async { [weak self] in
-            var maybeFrameSource: AnimatedStickerFrameSource? = frameSourceHolder.with { $0 }?.syncWith { $0 }?.value
+            var maybeFrameSource: AnimatedStickerFrameSource? = frameSourceHolder.with { $0 }?.syncWith { $0 }.value
             if case .timestamp = position {
             } else {
                 if let directData = directData {

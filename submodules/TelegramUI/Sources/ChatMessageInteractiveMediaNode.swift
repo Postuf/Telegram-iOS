@@ -68,8 +68,8 @@ struct ChatMessageDateAndStatus {
     var type: ChatMessageDateAndStatusType
     var edited: Bool
     var viewCount: Int?
-    var dateReplies: Int
     var dateReactions: [MessageReaction]
+    var dateReplies: Int
     var isPinned: Bool
     var dateText: String
 }
@@ -614,10 +614,8 @@ final class ChatMessageInteractiveMediaNode: ASDisplayNode, GalleryItemTransitio
                             
                             updatedFetchControls = FetchControls(fetch: { manual in
                                 if let strongSelf = self {
-                                    if !manual {
-                                        strongSelf.fetchDisposable.set(chatMessagePhotoInteractiveFetched(context: context, photoReference: .message(message: MessageReference(message), media: image), displayAtSize: isSecretMedia ? nil : 600, storeToDownloadsPeerType: storeToDownloadsPeerType).start())
-                                    } else if let representation = largestRepresentationForPhoto(image) {
-                                        strongSelf.fetchDisposable.set(messageMediaImageInteractiveFetched(context: context, message: message, image: image, resource: representation.resource, range: representationFetchRangeForDisplayAtSize(representation: representation, dimension: isSecretMedia ? nil : 600), storeToDownloadsPeerType: storeToDownloadsPeerType).start())
+                                    if let representation = largestRepresentationForPhoto(image) {
+                                        strongSelf.fetchDisposable.set(messageMediaImageInteractiveFetched(context: context, message: message, image: image, resource: representation.resource, range: representationFetchRangeForDisplayAtSize(representation: representation, dimension: nil/*isSecretMedia ? nil : 600*/), userInitiated: manual, storeToDownloadsPeerType: storeToDownloadsPeerType).start())
                                     }
                                 }
                             }, cancel: {
@@ -817,6 +815,7 @@ final class ChatMessageInteractiveMediaNode: ASDisplayNode, GalleryItemTransitio
                     let arguments = TransformImageArguments(corners: corners, imageSize: drawingSize, boundingSize: boundingSize, intrinsicInsets: UIEdgeInsets(), resizeMode: isInlinePlayableVideo ? .fill(.black) : .blurBackground, emptyColor: emptyColor, custom: patternArguments)
                     
                     let imageFrame = CGRect(origin: CGPoint(x: -arguments.insets.left, y: -arguments.insets.top), size: arguments.drawingSize).ensuredValid
+                    let cleanImageFrame = CGRect(origin: imageFrame.origin, size: CGSize(width: imageFrame.width - arguments.corners.extendedEdges.right, height: imageFrame.height))
                     
                     let imageApply = imageLayout(arguments)
                     
@@ -861,7 +860,7 @@ final class ChatMessageInteractiveMediaNode: ASDisplayNode, GalleryItemTransitio
                                 }
                                 statusApply(hasAnimation)
 
-                                let dateAndStatusFrame = CGRect(origin: CGPoint(x: imageFrame.width - layoutConstants.image.statusInsets.right - statusSize.width, y: imageFrame.height - layoutConstants.image.statusInsets.bottom - statusSize.height), size: statusSize)
+                                let dateAndStatusFrame = CGRect(origin: CGPoint(x: cleanImageFrame.width - layoutConstants.image.statusInsets.right - statusSize.width, y: cleanImageFrame.height - layoutConstants.image.statusInsets.bottom - statusSize.height), size: statusSize)
 
                                 strongSelf.dateAndStatusNode.frame = dateAndStatusFrame
                                 strongSelf.dateAndStatusNode.bounds = CGRect(origin: CGPoint(), size: dateAndStatusFrame.size)
@@ -893,7 +892,7 @@ final class ChatMessageInteractiveMediaNode: ASDisplayNode, GalleryItemTransitio
                                     
                                     let streamVideo = isMediaStreamable(message: message, media: updatedVideoFile)
                                     let loopVideo = updatedVideoFile.isAnimated
-                                    let videoContent = NativeVideoContent(id: .message(message.stableId, updatedVideoFile.fileId), fileReference: .message(message: MessageReference(message), media: updatedVideoFile), streamVideo: streamVideo ? .conservative : .none, loopVideo: loopVideo, enableSound: false, fetchAutomatically: false, onlyFullSizeThumbnail: (onlyFullSizeVideoThumbnail ?? false), continuePlayingWithoutSoundOnLostAudioSession: isInlinePlayableVideo, placeholderColor: emptyColor)
+                                    let videoContent = NativeVideoContent(id: .message(message.stableId, updatedVideoFile.fileId), fileReference: .message(message: MessageReference(message), media: updatedVideoFile), streamVideo: streamVideo ? .conservative : .none, loopVideo: loopVideo, enableSound: false, fetchAutomatically: false, onlyFullSizeThumbnail: (onlyFullSizeVideoThumbnail ?? false), continuePlayingWithoutSoundOnLostAudioSession: isInlinePlayableVideo, placeholderColor: emptyColor, captureProtected: message.isCopyProtected())
                                     let videoNode = UniversalVideoNode(postbox: context.account.postbox, audioSession: mediaManager.audioSession, manager: mediaManager.universalVideoManager, decoration: decoration, content: videoContent, priority: .embedded)
                                     videoNode.isUserInteractionEnabled = false
                                     videoNode.ownsContentNodeUpdated = { [weak self] owns in
@@ -971,6 +970,7 @@ final class ChatMessageInteractiveMediaNode: ASDisplayNode, GalleryItemTransitio
                             }
                             
                             if let updateImageSignal = updateImageSignal {
+                                strongSelf.imageNode.captureProtected = message.id.peerId.namespace == Namespaces.Peer.SecretChat || message.isCopyProtected()
                                 strongSelf.imageNode.setSignal(updateImageSignal(synchronousLoads, false), attemptSynchronously: synchronousLoads)
 
                                 var imageDimensions: CGSize?
@@ -1103,12 +1103,12 @@ final class ChatMessageInteractiveMediaNode: ASDisplayNode, GalleryItemTransitio
             return
         }
         
-        let automaticDownload: Bool
+        /*let automaticDownload: Bool
         if let autoDownload = self.automaticDownload, case .full = autoDownload {
             automaticDownload = true
         } else {
             automaticDownload = false
-        }
+        }*/
         
         var secretBeginTimeAndTimeout: (Double?, Double)?
         let isSecretMedia = message.containsSecretMedia
@@ -1391,10 +1391,7 @@ final class ChatMessageInteractiveMediaNode: ASDisplayNode, GalleryItemTransitio
                 case .Remote:
                     state = .download(messageTheme.mediaOverlayControlColors.foregroundColor)
                     if let file = self.media as? TelegramMediaFile {
-                        if false, file.isAnimated && (!automaticDownload || !automaticPlayback) {
-                            let string = "\(gifTitle) " + dataSizeString(file.size ?? 0, formatting: formatting)
-                            badgeContent = .mediaDownload(backgroundColor: messageTheme.mediaDateAndStatusFillColor, foregroundColor: messageTheme.mediaDateAndStatusTextColor, duration: string, size: nil, muted: false, active: false)
-                        } else {
+                        do {
                             let durationString = file.isAnimated ? gifTitle : stringForDuration(playerDuration > 0 ? playerDuration : (file.duration ?? 0), position: playerPosition)
                             if wideLayout {
                                 if isMediaStreamable(message: message, media: file) {
@@ -1570,8 +1567,23 @@ final class ChatMessageInteractiveMediaNode: ASDisplayNode, GalleryItemTransitio
                 statusNode.isHidden = true
             }
             
-            let view = self?.view.snapshotContentTree(unhide: true)
-            
+            let view: UIView?
+            if let strongSelf = self, strongSelf.imageNode.captureProtected {
+                let imageView = UIImageView()
+                imageView.contentMode = .scaleToFill
+                imageView.image = strongSelf.imageNode.image
+                imageView.frame = strongSelf.imageNode.frame
+                if imageView.layer.contents == nil {
+                    imageView.layer.contents = imageView.image?.cgImage
+                }
+                strongSelf.imageNode.view.superview?.insertSubview(imageView, aboveSubview: strongSelf.imageNode.view)
+                
+                view = self?.view.snapshotContentTree(unhide: true)
+                imageView.removeFromSuperview()
+            } else {
+                view = self?.view.snapshotContentTree(unhide: true)
+            }
+                        
             if let badgeNode = self?.badgeNode, let badgeNodeHidden = badgeNodeHidden {
                 badgeNode.isHidden = badgeNodeHidden
             }
