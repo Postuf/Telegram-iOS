@@ -30,12 +30,17 @@ available_appcenter_targets = [
     "@appcenter_sdk//:AppCenterCrashes",
 ]
 
+appcenter_targets = available_appcenter_targets if telegram_bundle_id in internal_bundle_ids else []
+
 swift_library(
     name = "TelegramUI",
     module_name = "TelegramUI",
     srcs = glob([
         "Sources/**/*.swift",
     ]),
+    copts = [
+        "-warnings-as-errors",
+    ],
     deps = [
         "//submodules/SSignalKit/SwiftSignalKit:SwiftSignalKit",
         "//submodules/SSignalKit/SSignalKit:SSignalKit",
@@ -183,7 +188,6 @@ swift_library(
         "//submodules/WatchBridge:WatchBridge",
         "//submodules/ShareItems:ShareItems",
         "//submodules/ShareItems/Impl:ShareItemsImpl",
-        "//submodules/ReactionSelectionNode:ReactionSelectionNode",
         "//submodules/SettingsUI:SettingsUI",
         "//submodules/UrlHandling:UrlHandling",
         "//submodules/HexColor:HexColor",
@@ -227,7 +231,6 @@ swift_library(
         "//Telegram:GeneratedSources",
         "//third-party/ZipArchive:ZipArchive",
         "//submodules/ChatImportUI:ChatImportUI",
-        "//submodules/ChatHistoryImportTasks:ChatHistoryImportTasks",
         "//submodules/DatePickerNode:DatePickerNode",
         "//submodules/ConfettiEffect:ConfettiEffect",
         "//submodules/Speak:Speak",
@@ -238,9 +241,24 @@ swift_library(
         "//submodules/WallpaperBackgroundNode:WallpaperBackgroundNode",
         "//submodules/ComponentFlow:ComponentFlow",
         "//submodules/AdUI:AdUI",
+        "//submodules/SparseItemGrid:SparseItemGrid",
+        "//submodules/CalendarMessageScreen:CalendarMessageScreen",
+        "//submodules/LottieMeshSwift:LottieMeshSwift",
+        "//submodules/MeshAnimationCache:MeshAnimationCache",
+        "//submodules/DirectMediaImageCache:DirectMediaImageCache",
+        "//submodules/CodeInputView:CodeInputView",
+        "//submodules/Components/ReactionButtonListComponent:ReactionButtonListComponent",
+        "//submodules/InvisibleInkDustNode:InvisibleInkDustNode",
+        "//submodules/QrCodeUI:QrCodeUI",
+        "//submodules/Components/ReactionListContextMenuContent:ReactionListContextMenuContent",
+        "//submodules/Components/ReactionImageComponent:ReactionImageComponent",
+        "//submodules/Translate:Translate",
+        "//submodules/TabBarUI:TabBarUI",
+        "//submodules/SoftwareVideo:SoftwareVideo",
+        "//submodules/ManagedFile:ManagedFile",
     ] + select({
-        "@build_bazel_rules_apple//apple:ios_armv7": available_appcenter_targets,
-        "@build_bazel_rules_apple//apple:ios_arm64": available_appcenter_targets,
+        "@build_bazel_rules_apple//apple:ios_armv7": [],
+        "@build_bazel_rules_apple//apple:ios_arm64": appcenter_targets,
         "//build-system:ios_sim_arm64": [],
         "@build_bazel_rules_apple//apple:ios_x86_64": [],
     }),
