@@ -46,7 +46,7 @@ public final class PasscodeSetupController: ViewController {
         
         self.nextAction = UIBarButtonItem(title: self.presentationData.strings.Common_Next, style: .done, target: self, action: #selector(self.nextPressed))
         
-        self.title = isOpaqueNavigationBar ? "" : self.presentationData.strings.PasscodeSettings_Title
+        self.title = self.presentationData.strings.PasscodeSettings_Title
     }
     
     required public init(coder aDecoder: NSCoder) {

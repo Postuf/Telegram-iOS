@@ -28,6 +28,21 @@ public struct AccountManagerModifier<Types: AccountManagerTypes> {
     public let setStoredLoginTokens: ([Data]) -> Void
 }
 
+// MARK: Postufgram Code: {
+public protocol HiddenAccountManager {
+    var unlockedHiddenAccountRecordIdPromise: ValuePromise<AccountRecordId?> { get }
+    var unlockedHiddenAccountRecordId: AccountRecordId? { get }
+    var getHiddenAccountsAccessChallengeDataPromise: Promise<[AccountRecordId:PostboxAccessChallengeData]> { get }
+    var accountManagerRecordIdPromise: ValuePromise<AccountRecordId?> { get }
+    var didFinishChangingAccountPromise: Promise<Void> { get }
+    
+    func hasPublicAccounts<Types: AccountManagerTypes>(accountManager: AccountManager<Types>) -> Signal<Bool, NoError>
+    func configureHiddenAccountsAccessChallengeData<Types: AccountManagerTypes>(accountManager: AccountManager<Types>)
+    func hiddenAccounts<Types: AccountManagerTypes>(accountManager: AccountManager<Types>) -> Signal<[AccountRecordId], NoError>
+    func isAccountHidden<Types: AccountManagerTypes>(accountRecordId: AccountRecordId,accountManager: AccountManager<Types>) -> Signal<Bool, NoError>
+}
+// MARK: Postufgram Code: }
+
 final class AccountManagerImpl<Types: AccountManagerTypes> {
     private let queue: Queue
     private let basePath: String
@@ -60,6 +75,9 @@ final class AccountManagerImpl<Types: AccountManagerTypes> {
     private var sharedDataViews = Bag<(MutableAccountSharedDataView<Types>, ValuePipe<AccountSharedDataView<Types>>)>()
     private var noticeEntryViews = Bag<(MutableNoticeEntryView<Types>, ValuePipe<NoticeEntryView<Types>>)>()
     private var accessChallengeDataViews = Bag<(MutableAccessChallengeDataView, ValuePipe<AccessChallengeDataView>)>()
+    private let hiddenAccountManager: HiddenAccountManager
+
+	private var unlockedHiddenAccountRecordIdDisposable: Disposable?
     
     static func getCurrentRecords(basePath: String) -> (records: [AccountRecord<Types.Attribute>], currentId: AccountRecordId?) {
         let atomicStatePath = "\(basePath)/atomic-state"
@@ -73,13 +91,14 @@ final class AccountManagerImpl<Types: AccountManagerTypes> {
         }
     }
     
-    fileprivate init?(queue: Queue, basePath: String, isTemporary: Bool, isReadOnly: Bool, useCaches: Bool, removeDatabaseOnError: Bool, temporarySessionId: Int64) {
+    fileprivate init?(queue: Queue, basePath: String, isTemporary: Bool, isReadOnly: Bool, useCaches: Bool, removeDatabaseOnError: Bool, temporarySessionId: Int64, hiddenAccountManager: HiddenAccountManager) {
         let startTime = CFAbsoluteTimeGetCurrent()
         
         self.queue = queue
         self.basePath = basePath
         self.atomicStatePath = "\(basePath)/atomic-state"
         self.loginTokensPath = "\(basePath)/login-tokens"
+        self.hiddenAccountManager = hiddenAccountManager
         self.temporarySessionId = temporarySessionId
         let _ = try? FileManager.default.createDirectory(atPath: basePath, withIntermediateDirectories: true, attributes: nil)
         guard let guardValueBox = SqliteValueBox(basePath: basePath + "/guard_db", queue: queue, isTemporary: isTemporary, isReadOnly: false, useCaches: useCaches, removeDatabaseOnError: removeDatabaseOnError, encryptionParameters: nil, upgradeProgress: { _ in }) else {
@@ -126,6 +145,24 @@ final class AccountManagerImpl<Types: AccountManagerTypes> {
             self.syncAtomicStateToFile()
         }
         
+        self.unlockedHiddenAccountRecordIdDisposable = hiddenAccountManager.accountManagerRecordIdPromise.get().start(next: { [weak self] id in
+            guard let strongSelf = self else { return }
+            
+            var metadataOperations = [AccountManagerMetadataOperation<Types.Attribute>]()
+            
+            if let id = id {
+                metadataOperations.append(.updateCurrentAccountId(id))
+            } else if let id = strongSelf.currentAtomicState.currentRecordId {
+                metadataOperations.append(.updateCurrentAccountId(id))
+            }
+            
+            for (view, pipe) in strongSelf.recordsViews.copyItems() {
+                if view.replay(operations: [], metadataOperations: metadataOperations) {
+                    pipe.putNext(AccountRecordsView(view))
+                }
+            }
+        })
+        
         postboxLog("AccountManager: currentAccountId = \(String(describing: currentAtomicState.currentRecordId))")
         
         self.tables.append(self.legacyMetadataTable)
@@ -138,11 +175,12 @@ final class AccountManagerImpl<Types: AccountManagerTypes> {
     
     deinit {
         assert(self.queue.isCurrent())
+        unlockedHiddenAccountRecordIdDisposable?.dispose()
     }
-
-    fileprivate func transactionSync<T>(ignoreDisabled: Bool, _ f: (AccountManagerModifier<Types>) -> T) -> T {
+    
+    fileprivate func transactionSync<T>(ignoreDisabled: Bool, _ f: @escaping (AccountManagerModifier<Types>) -> T) -> T {
         self.valueBox.begin()
-
+        
         let transaction = AccountManagerModifier<Types>(getRecords: {
             return self.currentAtomicState.records.map { $0.1 }
         }, updateRecord: { id, update in
@@ -167,6 +205,7 @@ final class AccountManagerImpl<Types: AccountManagerTypes> {
             self.currentAtomicState.currentRecordId = id
             self.currentMetadataOperations.append(.updateCurrentAccountId(id))
             self.currentAtomicStateUpdated = true
+            self.hiddenAccountManager.unlockedHiddenAccountRecordIdPromise.set(nil)
         }, getCurrentAuth: {
             if let record = self.currentAtomicState.currentAuthRecord {
                 return record
@@ -218,27 +257,28 @@ final class AccountManagerImpl<Types: AccountManagerTypes> {
         }, setStoredLoginTokens: { list in
             self.setLoginTokens(list: list)
         })
-
+        
         let result = f(transaction)
-
+        
         self.beforeCommit()
-
+        
         self.valueBox.commit()
-
+        //self.valueBox.checkpoint()
+        
         return result
     }
     
     fileprivate func transaction<T>(ignoreDisabled: Bool, _ f: @escaping (AccountManagerModifier<Types>) -> T) -> Signal<T, NoError> {
-        return Signal { subscriber in
-            self.queue.justDispatch {
-                let result = self.transactionSync(ignoreDisabled: ignoreDisabled, f)
-                
-                subscriber.putNext(result)
-                subscriber.putCompletion()
+            return Signal { subscriber in
+                self.queue.justDispatch {
+                    let result = self.transactionSync(ignoreDisabled: ignoreDisabled, f)
+                    
+                    subscriber.putNext(result)
+                    subscriber.putCompletion()
+                }
+                return EmptyDisposable
             }
-            return EmptyDisposable
         }
-    }
     
     private func syncAtomicStateToFile() {
         if let data = try? JSONEncoder().encode(self.currentAtomicState) {
@@ -317,12 +357,12 @@ final class AccountManagerImpl<Types: AccountManagerTypes> {
         }
     }
     
-    fileprivate func accountRecords() -> Signal<AccountRecordsView<Types>, NoError> {
-        return self.transaction(ignoreDisabled: false, { transaction -> Signal<AccountRecordsView<Types>, NoError> in
-            return self.accountRecordsInternal(transaction: transaction)
-        })
-        |> switchToLatest
-    }
+    fileprivate func accountRecords(currentRecordId: AccountRecordId?) -> Signal<AccountRecordsView<Types>, NoError> {
+         return self.transaction(ignoreDisabled: false, { transaction -> Signal<AccountRecordsView<Types>, NoError> in
+             return self.accountRecordsInternal(transaction: transaction, currentRecordId: currentRecordId)
+         })
+         |> switchToLatest
+     }
 
     fileprivate func _internalAccountRecordsSync() -> AccountRecordsView<Types> {
         let mutableView = MutableAccountRecordsView<Types>(getRecords: {
@@ -352,11 +392,11 @@ final class AccountManagerImpl<Types: AccountManagerTypes> {
         |> switchToLatest
     }
     
-    private func accountRecordsInternal(transaction: AccountManagerModifier<Types>) -> Signal<AccountRecordsView<Types>, NoError> {
+    private func accountRecordsInternal(transaction: AccountManagerModifier<Types>, currentRecordId: AccountRecordId?) -> Signal<AccountRecordsView<Types>, NoError> {
         assert(self.queue.isCurrent())
         let mutableView = MutableAccountRecordsView<Types>(getRecords: {
             return self.currentAtomicState.records.map { $0.1 }
-        }, currentId: self.currentAtomicState.currentRecordId, currentAuth: self.currentAtomicState.currentAuthRecord)
+        }, currentId: currentRecordId ?? self.currentAtomicState.currentRecordId, currentAuth: self.currentAtomicState.currentAuthRecord)
         let pipe = ValuePipe<AccountRecordsView<Types>>()
         let index = self.recordsViews.add((mutableView, pipe))
         
@@ -431,53 +471,53 @@ final class AccountManagerImpl<Types: AccountManagerTypes> {
         }
     }
     
-    fileprivate func currentAccountRecord(allocateIfNotExists: Bool) -> Signal<(AccountRecordId, [Types.Attribute])?, NoError> {
-        return self.transaction(ignoreDisabled: false, { transaction -> Signal<(AccountRecordId, [Types.Attribute])?, NoError> in
-            let current = transaction.getCurrent()
-            if let _ = current {
-            } else if allocateIfNotExists {
-                let id = generateAccountRecordId()
-                transaction.setCurrentId(id)
-                transaction.updateRecord(id, { _ in
-                    return AccountRecord(id: id, attributes: [], temporarySessionId: nil)
-                })
-            } else {
-                return .single(nil)
-            }
-            
-            let signal = self.accountRecordsInternal(transaction: transaction)
-            |> map { view -> (AccountRecordId, [Types.Attribute])? in
-                if let currentRecord = view.currentRecord {
-                    return (currentRecord.id, currentRecord.attributes)
+    fileprivate func currentAccountRecord(allocateIfNotExists: Bool, currentRecordId: AccountRecordId?) -> Signal<(AccountRecordId, [Types.Attribute])?, NoError> {
+            return self.transaction(ignoreDisabled: false, { transaction -> Signal<(AccountRecordId, [Types.Attribute])?, NoError> in
+                let current = transaction.getCurrent()
+                if let _ = current {
+                } else if allocateIfNotExists {
+                    let id = generateAccountRecordId()
+                    transaction.setCurrentId(id)
+                    transaction.updateRecord(id, { _ in
+                        return AccountRecord(id: id, attributes: [], temporarySessionId: nil)
+                    })
                 } else {
-                    return nil
+                    return .single(nil)
                 }
-            }
-            
-            return signal
-        })
-        |> switchToLatest
-        |> distinctUntilChanged(isEqual: { lhs, rhs in
-            if let lhs = lhs, let rhs = rhs {
-                if lhs.0 != rhs.0 {
-                    return false
-                }
-                if lhs.1.count != rhs.1.count {
-                    return false
-                }
-                for i in 0 ..< lhs.1.count {
-                    if !lhs.1[i].isEqual(to: rhs.1[i]) {
-                        return false
+                
+                let signal = self.accountRecordsInternal(transaction: transaction, currentRecordId: currentRecordId)
+                |> map { view -> (AccountRecordId, [Types.Attribute])? in
+                    if let currentRecord = view.currentRecord {
+                        return (currentRecord.id, currentRecord.attributes)
+                    } else {
+                        return nil
                     }
                 }
-                return true
-            } else if (lhs != nil) != (rhs != nil) {
-                return false
-            } else {
-                return true
-            }
-        })
-    }
+                
+                return signal
+            })
+            |> switchToLatest
+            |> distinctUntilChanged(isEqual: { lhs, rhs in
+                if let lhs = lhs, let rhs = rhs {
+                    if lhs.0 != rhs.0 {
+                        return false
+                    }
+                    if lhs.1.count != rhs.1.count {
+                        return false
+                    }
+                    for i in 0 ..< lhs.1.count {
+                        if !lhs.1[i].isEqual(to: rhs.1[i]) {
+                            return false
+                        }
+                    }
+                    return true
+                } else if (lhs != nil) != (rhs != nil) {
+                    return false
+                } else {
+                    return true
+                }
+            })
+        }
     
     func allocatedTemporaryAccountId() -> Signal<AccountRecordId, NoError> {
         let temporarySessionId = self.temporarySessionId
@@ -505,12 +545,14 @@ public final class AccountManager<Types: AccountManagerTypes> {
     private let queue: Queue
     private let impl: QueueLocalObject<AccountManagerImpl<Types>>
     public let temporarySessionId: Int64
+
+	public let hiddenAccountManager: HiddenAccountManager
     
     public static func getCurrentRecords(basePath: String) -> (records: [AccountRecord<Types.Attribute>], currentId: AccountRecordId?) {
         return AccountManagerImpl<Types>.getCurrentRecords(basePath: basePath)
     }
     
-    public init(basePath: String, isTemporary: Bool, isReadOnly: Bool, useCaches: Bool, removeDatabaseOnError: Bool) {
+    public init(basePath: String, isTemporary: Bool, isReadOnly: Bool, useCaches: Bool, removeDatabaseOnError: Bool, hiddenAccountManager: HiddenAccountManager) {
         self.queue = sharedQueue
         self.basePath = basePath
         var temporarySessionId: Int64 = 0
@@ -518,13 +560,15 @@ public final class AccountManager<Types: AccountManagerTypes> {
         self.temporarySessionId = temporarySessionId
         let queue = self.queue
         self.impl = QueueLocalObject(queue: queue, generate: {
-            if let value = AccountManagerImpl<Types>(queue: queue, basePath: basePath, isTemporary: isTemporary, isReadOnly: isReadOnly, useCaches: useCaches, removeDatabaseOnError: removeDatabaseOnError, temporarySessionId: temporarySessionId) {
+            if let value = AccountManagerImpl<Types>(queue: queue, basePath: basePath, isTemporary: isTemporary, isReadOnly: isReadOnly, useCaches: useCaches, removeDatabaseOnError: removeDatabaseOnError, temporarySessionId: temporarySessionId, hiddenAccountManager: hiddenAccountManager) {
                 return value
             } else {
                 preconditionFailure()
             }
         })
         self.mediaBox = MediaBox(basePath: basePath + "/media")
+        self.hiddenAccountManager = hiddenAccountManager
+        hiddenAccountManager.configureHiddenAccountsAccessChallengeData(accountManager: self)
     }
     
     public func transaction<T>(ignoreDisabled: Bool = false, _ f: @escaping (AccountManagerModifier<Types>) -> T) -> Signal<T, NoError> {
@@ -542,19 +586,22 @@ public final class AccountManager<Types: AccountManagerTypes> {
     }
     
     public func accountRecords() -> Signal<AccountRecordsView<Types>, NoError> {
-        return Signal { subscriber in
-            let disposable = MetaDisposable()
-            self.impl.with { impl in
-                disposable.set(impl.accountRecords().start(next: { next in
-                    subscriber.putNext(next)
-                }, completed: {
-                    subscriber.putCompletion()
-                }))
+        return hiddenAccountManager.accountManagerRecordIdPromise.get() |> mapToSignal { currentHiddenRecordId in
+            return Signal { subscriber in
+                let disposable = MetaDisposable()
+                self.impl.with { impl in
+                    disposable.set(impl.accountRecords(currentRecordId: currentHiddenRecordId)
+                        .start(next: { next in
+                        subscriber.putNext(next)
+                    }, completed: {
+                        subscriber.putCompletion()
+                    }))
+                }
+                return disposable
             }
-            return disposable
         }
     }
-
+    
     public func _internalAccountRecordsSync() -> AccountRecordsView<Types> {
         var result: AccountRecordsView<Types>?
         self.impl.syncWith { impl in
@@ -606,16 +653,18 @@ public final class AccountManager<Types: AccountManagerTypes> {
     }
     
     public func currentAccountRecord(allocateIfNotExists: Bool) -> Signal<(AccountRecordId, [Types.Attribute])?, NoError> {
-        return Signal { subscriber in
-            let disposable = MetaDisposable()
-            self.impl.with { impl in
-                disposable.set(impl.currentAccountRecord(allocateIfNotExists: allocateIfNotExists).start(next: { next in
-                    subscriber.putNext(next)
-                }, completed: {
-                    subscriber.putCompletion()
-                }))
+        return hiddenAccountManager.accountManagerRecordIdPromise.get() |> mapToSignal { currentHiddenRecordId in
+            return Signal { subscriber in
+                let disposable = MetaDisposable()
+                self.impl.with { impl in
+                    disposable.set(impl.currentAccountRecord(allocateIfNotExists: allocateIfNotExists, currentRecordId: currentHiddenRecordId).start(next: { next in
+                        subscriber.putNext(next)
+                    }, completed: {
+                        subscriber.putCompletion()
+                    }))
+                }
+                return disposable
             }
-            return disposable
         }
     }
     

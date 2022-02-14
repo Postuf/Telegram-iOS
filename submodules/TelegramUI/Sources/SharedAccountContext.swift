@@ -899,10 +899,10 @@ public final class SharedAccountContextImpl: SharedAccountContext {
         #endif
         
         let settings = self.accountManager.sharedData(keys: [ApplicationSpecificSharedDataKeys.inAppNotificationSettings])
-
-        |> map { sharedData -> (allAccounts: Bool, includeMuted: Bool) in
+        |> map { sharedData -> (allAccounts: Bool, includeMuted: Bool, disabledNotificationsAccountRecords: [AccountRecordId]) in
             let settings = sharedData.entries[ApplicationSpecificSharedDataKeys.inAppNotificationSettings]?.get(InAppNotificationSettings.self) ?? InAppNotificationSettings.defaultSettings
-            return (settings.displayNotificationsFromAllAccounts, false)
+
+            return (settings.displayNotificationsFromAllAccounts, false, settings.disabledNotificationsAccountRecords)
         }
         |> distinctUntilChanged(isEqual: { lhs, rhs in
             if lhs.allAccounts != rhs.allAccounts {
@@ -923,14 +923,12 @@ public final class SharedAccountContextImpl: SharedAccountContext {
             var applied: [Signal<Never, NoError>] = []
             var activeProductionUserIds = activeAccounts.map({ $0.1.account }).filter({ !$0.testingEnvironment && !settings.disabledNotificationsAccountRecords.contains($0.id) }).map({ $0.peerId.id })
             var activeTestingUserIds = activeAccounts.map({ $0.1.account }).filter({ $0.testingEnvironment && !settings.disabledNotificationsAccountRecords.contains($0.id) }).map({ $0.peerId.id })
-
             
             let allProductionUserIds = activeProductionUserIds
             let allTestingUserIds = activeTestingUserIds
             
             if !settings.allAccounts {
                 if let primary = primary, !settings.disabledNotificationsAccountRecords.contains(primary.account.id) {
-
                     if !primary.account.testingEnvironment {
                         activeProductionUserIds = [primary.account.peerId.id]
                         activeTestingUserIds = []
@@ -1010,7 +1008,6 @@ public final class SharedAccountContextImpl: SharedAccountContext {
                     .environment(AccountEnvironmentAttribute(environment: testingEnvironment ? .test : .production)),
                     .continueDoubleBottom(ContinueDoubleBottomFlowAttribute())
                 ])
-
         }).start()
     }
     
@@ -1178,8 +1175,7 @@ public final class SharedAccountContextImpl: SharedAccountContext {
         handleTextLinkActionImpl(context: context, peerId: peerId, navigateDisposable: navigateDisposable, controller: controller, action: action, itemLink: itemLink)
     }
     
-    public func makePeerInfoController(context: AccountContext, updatedPresentationData: (initial: PresentationData, signal: Signal<PresentationData, NoError>)?, peer: Peer, mode: PeerInfoControllerMode, avatarInitiallyExpanded: Bool, fromChat: Bool) -> ViewController? {
-
+    public func makePeerInfoController(context: AccountContext, updatedPresentationData: (initial: PresentationData, signal: Signal<PresentationData, NoError>)?, peer: Peer, mode: PeerInfoControllerMode, avatarInitiallyExpanded: Bool, fromChat: Bool, requestsContext: PeerInvitationImportersContext?) -> ViewController? {
         let controller = peerInfoControllerImpl(context: context, updatedPresentationData: updatedPresentationData, peer: peer, mode: mode, avatarInitiallyExpanded: avatarInitiallyExpanded, isOpenedFromChat: fromChat)
         controller?.navigationPresentation = .modalInLargeLayout
         return controller
@@ -1378,16 +1374,13 @@ public final class SharedAccountContextImpl: SharedAccountContext {
         }, automaticMediaDownloadSettings: MediaAutoDownloadSettings.defaultSettings,
            pollActionState: ChatInterfacePollActionState(), stickerSettings: ChatInterfaceStickerSettings(loopAnimatedStickers: false), presentationContext: ChatPresentationContext(backgroundNode: backgroundNode as? WallpaperBackgroundNode))
         
-        var entryAttributes = ChatMessageEntryAttributes()
-        entryAttributes.isCentered = isCentered
-        
         let content: ChatMessageItemContent
         let chatLocation: ChatLocation
         if messages.count > 1 {
-            content = .group(messages: messages.map { ($0, true, .none, entryAttributes, nil) })
+            content = .group(messages: messages.map { ($0, true, .none, ChatMessageEntryAttributes(), nil) })
             chatLocation = .peer(messages.first!.id.peerId)
         } else {
-            content = .message(message: messages.first!, read: true, selection: .none, attributes: entryAttributes, location: nil)
+            content = .message(message: messages.first!, read: true, selection: .none, attributes: ChatMessageEntryAttributes(), location: nil)
             chatLocation = .peer(messages.first!.id.peerId)
         }
         
@@ -1506,7 +1499,6 @@ public final class SharedAccountContextImpl: SharedAccountContext {
 }
 
 private let defaultChatControllerInteraction = ChatControllerInteraction.default
-
 
 private func peerInfoControllerImpl(context: AccountContext, updatedPresentationData: (PresentationData, Signal<PresentationData, NoError>)?, peer: Peer, mode: PeerInfoControllerMode, avatarInitiallyExpanded: Bool, isOpenedFromChat: Bool, requestsContext: PeerInvitationImportersContext? = nil) -> ViewController? {
     if let _ = peer as? TelegramGroup {

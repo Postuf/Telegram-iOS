@@ -212,11 +212,4 @@ final class ManagedDiceAnimationNode: ManagedAnimationNode, GenericAnimatedStick
     var currentFrameIndex: Int {
         return 0
     }
-
-    func setFrameIndex(_ frameIndex: Int) {
-    }
-
-    var currentFrameIndex: Int {
-        return 0
-    }
 }

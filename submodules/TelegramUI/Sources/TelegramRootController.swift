@@ -228,7 +228,7 @@ public final class TelegramRootController: NavigationController {
         } |> deliverOnMainQueue).start(completed: { [weak self] in
             guard let strongSelf = self else { return }
             
-            strongSelf.popViewController(animated: true)
+            _ = strongSelf.popViewController(animated: true)
         })
     }
 }

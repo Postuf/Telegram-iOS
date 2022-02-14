@@ -4,7 +4,7 @@ import TelegramCore
 import TelegramUIPreferences
 import AccountContext
 
-public let maximumNumberOfAccounts = 3
+public let maximumNumberOfAccounts = Int.max
 
 public func activeAccountsAndPeers(context: AccountContext, includePrimary: Bool = false) -> Signal<((AccountContext, EnginePeer)?, [(AccountContext, EnginePeer, Int32)]), NoError> {
     let sharedContext = context.sharedContext
@@ -46,5 +46,17 @@ public func activeAccountsAndPeers(context: AccountContext, includePrimary: Bool
             let accountRecords: [(AccountContext, EnginePeer, Int32)] = (includePrimary ? accounts : accounts.filter({ $0?.0.account.id != primary?.account.id })).compactMap({ $0 })
             return (primaryRecord, accountRecords)
         }
+    }
+}
+
+public func visibleAccountsAndPeers(context: AccountContext, includePrimary: Bool = false) -> Signal<((AccountContext, EnginePeer)?, [(AccountContext, EnginePeer, Int32)]), NoError> {
+    let hiddenIds = context.sharedContext.accountManager.accountRecords()
+    |> map { view -> [AccountRecordId] in
+        return view.records.filter({ $0.attributes.contains(where: { $0.isHiddenAccountAttribute }) }).map { $0.id }
+    }
+    |> distinctUntilChanged(isEqual: ==)
+    
+    return combineLatest(activeAccountsAndPeers(context: context, includePrimary: includePrimary), hiddenIds) |> map { accountsAndPeers, hiddenIds in
+        return (accountsAndPeers.0, accountsAndPeers.1.filter { !hiddenIds.contains($0.0.account.id) })
     }
 }

@@ -168,10 +168,6 @@ public final class AuthorizationSequenceController: NavigationController, MFMail
                 strongSelf.account = updatedAccount
             }
             
-            let replaceTopControllerImpl: ((ViewController, Bool) -> Void)? = { [weak controller] c, animated in
-                (controller?.navigationController as? NavigationController)?.replaceTopController(c, animated: animated)
-            }
-            
             controller.loginWithNumber = { [weak self, weak controller] number, syncContacts in
                 if let strongSelf = self {
                     controller?.inProgress = true
@@ -801,7 +797,7 @@ public final class AuthorizationSequenceController: NavigationController, MFMail
                     }
                     controllers.append(self.passwordEntryController(hint: hint, suggestReset: suggestReset, syncContacts: syncContacts))
                     self.setViewControllers(controllers, animated: !self.viewControllers.isEmpty)
-                case let .passwordRecovery(hint, _, _, emailPattern, syncContacts):
+                case let .passwordRecovery(_, _, _, emailPattern, syncContacts):
                     var controllers: [ViewController] = []
                     if !self.otherAccountPhoneNumbers.1.isEmpty {
                         controllers.append(self.splashController())

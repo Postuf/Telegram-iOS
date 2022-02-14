@@ -532,8 +532,6 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
         
         self.hasActiveAudioSession.set(MediaManagerImpl.globalAudioSession.isActive())
         
-        initializeAccountManagement()
-        
         let applicationBindings = TelegramApplicationBindings(isMainApp: true, appBundleId: baseAppBundleId, containerPath: appGroupUrl.path, appSpecificScheme: buildConfig.appSpecificUrlScheme, openUrl: { url in
             var parsedUrl = URL(string: url)
             if let parsed = parsedUrl {
@@ -713,36 +711,17 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
             UIDevice.current.setValue(value, forKey: "orientation")
             UINavigationController.attemptRotationToDeviceOrientation()
         })
-
-        let accountManager = AccountManager<TelegramAccountManagerTypes>(basePath: rootPath + "/accounts-metadata", isTemporary: false, isReadOnly: false, useCaches: true, removeDatabaseOnError: true)
+        
+        let hiddenAccountManager = HiddenAccountManagerImpl()
+        let accountManager = AccountManager<TelegramAccountManagerTypes>(basePath: rootPath + "/accounts-metadata", isTemporary: false, isReadOnly: false, useCaches: true, removeDatabaseOnError: true, hiddenAccountManager: hiddenAccountManager)
         self.accountManager = accountManager
 
         telegramUIDeclareEncodables()
         initializeAccountManagement()
         
-        let hiddenAccountManager = HiddenAccountManagerImpl()
-        let accountManagerSignal = Signal<AccountManager<TelegramAccountManagerTypes>, NoError> { subscriber in
-            let accountManager = AccountManager<TelegramAccountManagerTypes>(basePath: rootPath + "/accounts-metadata", isTemporary: false, isReadOnly: false, hiddenAccountManager: hiddenAccountManager)
-            return (upgradedAccounts(accountManager: accountManager, rootPath: rootPath, encryptionParameters: encryptionParameters)
-            |> deliverOnMainQueue).start(next: { progress in
-                if self.dataImportSplash == nil {
-                    self.dataImportSplash = makeLegacyDataImportSplash(theme: nil, strings: nil)
-                    self.dataImportSplash?.serviceAction = {
-                        self.debugPressed()
-                    }
-                    self.mainWindow.coveringView = self.dataImportSplash
-                }
-                self.dataImportSplash?.progress = (.generic, progress)
-            }, completed: {
-                if let dataImportSplash = self.dataImportSplash {
-                    self.dataImportSplash = nil
-                    if self.mainWindow.coveringView === dataImportSplash {
-                        self.mainWindow.coveringView = nil
-                    }
-                }
-                subscriber.putNext(accountManager)
-                subscriber.putCompletion()
-            })
+        let pushRegistry = PKPushRegistry(queue: .main)
+        if #available(iOS 9.0, *) {
+            pushRegistry.desiredPushTypes = Set([.voIP])
         }
         self.pushRegistry = pushRegistry
         pushRegistry.delegate = self
@@ -775,12 +754,12 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
                 return (self.mainWindow?.viewController as? TelegramRootController)?.chatListController?.lockViewFrame
             })
             // MARK: Postufgram Code: {
-            appLockContext.onUnlockedDismiss.signal()
+            _ = appLockContext.onUnlockedDismiss.signal()
                 .start { [weak self] _ in
                     self?.unlockedAndReady.putNext(())
                 }
             
-            appLockContext.isCurrentlyLocked
+            _ = appLockContext.isCurrentlyLocked
                 .start { [weak self] isCurrentlyLocked in
                     self?.isCurrentlyLocked = isCurrentlyLocked
                 }
@@ -869,13 +848,7 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
             |> mapToSignal { context -> Signal<AccountRecordId?, NoError> in
                 if let context = context, let liveLocationManager = context.context.liveLocationManager {
                     let accountId = context.context.account.id
-                    return combineLatest(queue: .mainQueue(),
-                        liveLocationManager.isPolling,
-                        liveLocationManager.hasBackgroundTasks
-                    )
-                    |> map { isPolling, hasBackgroundTasks -> Bool in
-                        return isPolling || hasBackgroundTasks
-                    }
+                    return liveLocationManager.isPolling
                     |> distinctUntilChanged
                     |> map { value -> AccountRecordId? in
                         if value {
@@ -1121,13 +1094,13 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
                     self.resetIntentsIfNeeded(context: context.context)
                 }))
                 
-                context.context.account.postbox.transaction({ transaction -> Void in
-                    var value = transaction.getPreferencesEntry(key: PreferencesKeys.doubleBottomHideTimestamp) as? DoubleBottomHideTimestamp ?? DoubleBottomHideTimestamp.defaultValue
+                _ = context.context.account.postbox.transaction({ transaction -> Void in
+                    var value = transaction.getPreferencesEntry(key: PreferencesKeys.doubleBottomHideTimestamp)?.get(DoubleBottomHideTimestamp.self) ?? DoubleBottomHideTimestamp.defaultValue
                     if value.timestamp == 0 {
                         value.timestamp = Int64(Date().timeIntervalSince1970) + 600
-                        transaction.setPreferencesEntry(key: PreferencesKeys.doubleBottomHideTimestamp, value: value)
+                        transaction.setPreferencesEntry(key: PreferencesKeys.doubleBottomHideTimestamp, value: PreferencesEntry(value))
                     }
-                    }).start()
+                }).start()
             } else {
                 self.mainWindow.viewController = nil
                 self.mainWindow.topLevelOverlayControllers = []
@@ -1148,7 +1121,7 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
             
             if let authContextValue = self.authContextValue {
                 authContextValue.account.shouldBeServiceTaskMaster.set(.single(.never))
-                 if authContextValue.authorizationCompleted {
+                if authContextValue.authorizationCompleted {
                     if let _ = self.doubleBottomFlow?.doubleBottomContext {
                         self.doubleBottomFlow?.doubleBottomContext?.doubleBottomAddAccountFlowInProgress = false
                         self.doubleBottomFlow?.continueAfterAddingAccount(with: authContextValue.account.id)
@@ -1160,7 +1133,7 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
                         }
                         |> take(1)
                         |> timeout(4.0, queue: .mainQueue(), alternate: .complete())
-                            |> deliverOnMainQueue).start(completed: { [weak self] in
+                            |> deliverOnMainQueue).start(completed: {
                             authContextValue.rootController.view.endEditing(true)
                             authContextValue.rootController.dismiss()
                         })
@@ -1256,7 +1229,7 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
                     
                     return visibleAccountsAndPeers(context: context.context)
                     |> take(1)
-                    |> map { primaryAndAccounts -> (AccountContext, Peer, Int32)? in
+                    |> map { primaryAndAccounts -> (AccountContext, EnginePeer, Int32)? in
                         let accounts = primaryAndAccounts.1
                         if context.context.sharedContext.accountManager.hiddenAccountManager.unlockedHiddenAccountRecordId != nil {
                             if accounts.count > 1 {
@@ -1301,8 +1274,8 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
         
         if let url = launchOptions?[.url] {
             if let url = url as? URL, url.scheme == "tg" || url.scheme == buildConfig.appSpecificUrlScheme {
-                self.openUrlWhenReady(url: url)
-            } else if let urlString = url as? String, urlString.lowercased().hasPrefix("tg:") || urlString.lowercased().hasPrefix("\(buildConfig.appSpecificUrlScheme):"), let url = URL(string: urlString) {
+                self.openUrlWhenReady(url: url.absoluteString)
+            } else if let url = url as? String, url.lowercased().hasPrefix("tg:") || url.lowercased().hasPrefix("\(buildConfig.appSpecificUrlScheme):") {
                 self.openUrlWhenReady(url: url)
             }
         }
@@ -1353,7 +1326,6 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
     }
 
     private func resetBadge() {
-        var resetOnce = true
         self.badgeDisposable.set((self.context.get()
         |> mapToSignal { context -> Signal<Int32, NoError> in
             if let context = context {
@@ -1363,12 +1335,6 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
             }
         }
         |> deliverOnMainQueue).start(next: { count in
-            if resetOnce {
-                resetOnce = false
-                if count == 0 {
-                    UIApplication.shared.applicationIconBadgeNumber = 1
-                }
-            }
             UIApplication.shared.applicationIconBadgeNumber = Int(count)
         }))
     }
@@ -1491,7 +1457,7 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
         }
         
         Logger.shared.log("App \(self.episodeId)", "remoteNotification: \(redactedPayload)")
-
+        
         if userInfo["p"] == nil {
             completionHandler(.noData)
             return
@@ -1664,48 +1630,10 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
         |> deliverOnMainQueue).start(next: { sharedApplicationContext in
             let _ = (sharedApplicationContext.sharedContext.activeAccountContexts
             |> take(1)
-            |> deliverOnMainQueue).start(next: { sharedApplicationContext in
-                if var encryptedPayload = payload.dictionaryPayload["p"] as? String {
-                    encryptedPayload = encryptedPayload.replacingOccurrences(of: "-", with: "+")
-                    encryptedPayload = encryptedPayload.replacingOccurrences(of: "_", with: "/")
-                    while encryptedPayload.count % 4 != 0 {
-                        encryptedPayload.append("=")
-                    }
-                    if let data = Data(base64Encoded: encryptedPayload) {
-                        let _ = (sharedApplicationContext.sharedContext.activeAccountContexts
-                        |> take(1)
-                        |> mapToSignal { activeAccounts -> Signal<[(Account, MasterNotificationKey)], NoError> in
-                            return combineLatest(activeAccounts.accounts.map { context -> Signal<(Account, MasterNotificationKey), NoError> in
-                                return masterNotificationsKey(account: context.1.account, ignoreDisabled: true)
-                                |> map { key -> (Account, MasterNotificationKey) in
-                                    return (context.1.account, key)
-                                }
-                            })
-                        }
-                        |> deliverOnMainQueue).start(next: { accountsAndKeys in
-                            var accountAndDecryptedPayload: (Account, Data)?
-                            for (account, key) in accountsAndKeys {
-                                if let decryptedData = decryptedNotificationPayload(key: key, data: data) {
-                                    accountAndDecryptedPayload = (account, decryptedData)
-                                    break
-                                }
-                            }
-                            
-                            if let (account, decryptedData) = accountAndDecryptedPayload {
-                                if let decryptedDict = (try? JSONSerialization.jsonObject(with: decryptedData, options: [])) as? [AnyHashable: Any] {
-                                    if var updateString = decryptedDict["updates"] as? String {
-                                        updateString = updateString.replacingOccurrences(of: "-", with: "+")
-                                        updateString = updateString.replacingOccurrences(of: "_", with: "/")
-                                        while updateString.count % 4 != 0 {
-                                            updateString.append("=")
-                                        }
-                                        if let updateData = Data(base64Encoded: updateString) {
-                                            account.stateManager.processIncomingCallUpdate(data: updateData, completion: { _ in
-                                            })
-                                        }
-                                    }
-                                }
-                            }
+            |> deliverOnMainQueue).start(next: { activeAccounts in
+                for (_, context, _) in activeAccounts.accounts {
+                    if context.account.id == accountId {
+                        context.account.stateManager.processIncomingCallUpdate(data: updateData, completion: { _ in
                         })
                         
                         break
@@ -1755,7 +1683,6 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
         // MARK: Postufgram Code: {
         self.handleUniversalLink(url)
         // MARK: Postufgram Code: }
-
         return true
     }
     
@@ -1775,13 +1702,13 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
     
     private func handleURLWhenUnlocked(_ url: URL) {
         self.needOpenURL = true
-        (self.unlockedAndReady.signal()
+        _ = (self.unlockedAndReady.signal()
             |> filter { self.needOpenURL }
             |> take(1))
-            .start { [weak self] in
+            .start(next: { [weak self] in
                 self?.needOpenURL = false
                 self?.openUrl(url: url)
-            }
+            })
     }
     // MARK: Postufgram Code: }
     
@@ -2074,17 +2001,12 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
         }))
     }
     
-    private var openUrlInProgress: URL?
-    private func openUrlWhenReady(url: URL) {
-        self.openUrlInProgress = url
-        
+    private func openUrlWhenReady(url: String) {
         self.openUrlWhenReadyDisposable.set((self.authorizedContext()
         |> take(1)
-        |> deliverOnMainQueue).start(next: { [weak self] context in
-            context.openUrl(url)
-            
-            Queue.mainQueue().after(1.0, {
-                self?.openUrlInProgress = nil
+        |> deliverOnMainQueue).start(next: { context in
+            let presentationData = context.context.sharedContext.currentPresentationData.with { $0 }
+            context.context.sharedContext.openExternalUrl(context: context.context, urlContext: .generic, url: url, forceExternal: false, presentationData: presentationData, navigationController: context.rootController, dismissInput: {
             })
         }))
     }
@@ -2224,7 +2146,7 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
                             if result {
                                 Queue.mainQueue().async {
                                     let reply = UNTextInputNotificationAction(identifier: "reply", title: replyString, options: [], textInputButtonTitle: replyString, textInputPlaceholder: messagePlaceholderString)
-                                                                        
+                                    
                                     let unknownMessageCategory: UNNotificationCategory
                                     let replyMessageCategory: UNNotificationCategory
                                     let replyLegacyMessageCategory: UNNotificationCategory

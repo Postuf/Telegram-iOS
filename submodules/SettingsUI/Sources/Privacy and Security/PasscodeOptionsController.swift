@@ -396,7 +396,6 @@ func passcodeOptionsController(context: AccountContext) -> ViewController {
 }
 
 public func passcodeOptionsAccessController(context: AccountContext, animateIn: Bool = true, pushController: ((ViewController) -> Void)?, completion: @escaping (Bool) -> Void) -> Signal<ViewController?, NoError> {
-    
     return context.sharedContext.accountManager.transaction { transaction -> PostboxAccessChallengeData in
         return transaction.getAccessChallengeData()
     }

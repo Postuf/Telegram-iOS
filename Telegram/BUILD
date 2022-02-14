@@ -631,7 +631,7 @@ plist_fragment(
     </array>
     <key>WKWatchKitApp</key>
     <true/>
-    <key>CFBundlePackageType</key>
+    <key>CFBundlePackageType</key> ы
     <string>APPL</string>
     """.format(
         telegram_bundle_id = telegram_bundle_id,

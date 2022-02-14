@@ -515,7 +515,7 @@ private func privacySearchableItems(context: AccountContext, privacySettings: Ac
             presentSelectivePrivacySettings(context, .groupInvitations, present)
         }),
         SettingsSearchableItem(id: .privacy(7), title: passcodeTitle, alternate: passcodeAlternate, icon: icon, breadcrumbs: [strings.Settings_PrivacySettings], present: { context, _, present in
-            let _ = passcodeOptionsAccessController(context: context, pushController: { c in 
+            let _ = passcodeOptionsAccessController(context: context, pushController: { c in
                 present(.push, c)
             }, completion: { animated in
                 let controller = passcodeOptionsController(context: context)
@@ -732,7 +732,7 @@ func settingsSearchableItems(context: AccountContext, notificationExceptionsList
     let watchAppInstalled = (context.watchManager?.watchAppInstalled ?? .single(false))
     |> take(1)
 
-    let canAddAccount = visibleAccountsAndPeers(context: context)
+    let canAddAccount = activeAccountsAndPeers(context: context)
     |> take(1)
     |> map { accountsAndPeers -> Bool in
         return accountsAndPeers.1.count + 1 < maximumNumberOfAccounts

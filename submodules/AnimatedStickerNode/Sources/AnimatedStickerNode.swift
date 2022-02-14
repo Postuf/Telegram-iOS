@@ -203,6 +203,8 @@ public final class AnimatedStickerNode: ASDisplayNode {
         }
     }
     
+    private var completion: (() -> Void)?
+    private var stopAtFrame: Int?
     public var isPlayingChanged: (Bool) -> Void = { _ in }
     
     private var overlayColor: (UIColor?, Bool)? = nil
@@ -341,6 +343,8 @@ public final class AnimatedStickerNode: ASDisplayNode {
                 
                 self.isPlayingChanged(isPlaying)
             }
+            
+            self.isPlayingChanged(isPlaying)
         }
         if self.automaticallyLoadLastFrame {
             if self.isDisplaying {
@@ -459,6 +463,19 @@ public final class AnimatedStickerNode: ASDisplayNode {
                                 }
                                 
                                 strongSelf.completed(stopped)
+                                
+                                if let completion = strongSelf.completion {
+                                    completion()
+                                    strongSelf.completion = nil
+                                }
+                            } else if frame.index == strongSelf.stopAtFrame {
+                                strongSelf.pause()
+                                strongSelf.isPlaying = false
+                                
+                                if let completion = strongSelf.completion {
+                                    completion()
+                                    strongSelf.completion = nil
+                                }
                             }
 
                             let timestamp: Double = frameRate > 0 ? Double(frame.index) / Double(frameRate) : 0
@@ -538,6 +555,8 @@ public final class AnimatedStickerNode: ASDisplayNode {
                                     strongSelf.started()
                                 }
                             })
+
+                            strongSelf.currentFrameIndex = frame.index
                             
                             strongSelf.frameUpdated(frame.index, frame.totalFrames)
                             strongSelf.currentFrameIndex = frame.index
@@ -564,6 +583,20 @@ public final class AnimatedStickerNode: ASDisplayNode {
                                 }
                                 
                                 strongSelf.completed(stopped)
+                                
+                                if let completion = strongSelf.completion {
+                                    completion()
+                                    strongSelf.completion = nil
+                                }
+                                
+                            } else if frame.index == strongSelf.stopAtFrame {
+                                strongSelf.pause()
+                                strongSelf.isPlaying = false
+                                
+                                if let completion = strongSelf.completion {
+                                    completion()
+                                    strongSelf.completion = nil
+                                }
                             }
                                                         
                             let timestamp: Double = frameRate > 0 ? Double(frame.index) / Double(frameRate) : 0
@@ -591,6 +624,23 @@ public final class AnimatedStickerNode: ASDisplayNode {
         if self.playToCompletionOnStop {
             self.seekTo(.start)
         }
+    }
+    
+    public func finishAnimation(resume: Bool, fromIndex: Int = 0, completion: @escaping () -> Void) {
+        self.completion = completion
+        self.playbackMode = .loop
+        if resume {
+            self.play(firstFrame: false, fromIndex: fromIndex)
+        } else {
+            let _ = self.playIfNeeded()
+        }
+    }
+    
+    public func playTo(frame: Int, fromIndex: Int = 0, completion: @escaping () -> Void) {
+        self.completion = completion
+        self.stopAtFrame = frame
+        self.playbackMode = .loop
+        self.play(firstFrame: false, fromIndex: fromIndex)
     }
     
     public func seekTo(_ position: AnimatedStickerPlaybackPosition) {

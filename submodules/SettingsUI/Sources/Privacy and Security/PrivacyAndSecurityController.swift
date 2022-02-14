@@ -328,23 +328,23 @@ private enum PrivacyAndSecurityEntry: ItemListNodeEntry {
                     arguments.openVoiceCallPrivacy()
                 })
             case let .passcode(_, text, hasFaceId, value):
-                return ItemListDisclosureItem(presentationData: presentationData, icon: UIImage(bundleImageName: hasFaceId ? "Settings/Menu/FaceId" : "Settings/MenuIcons/TouchId")?.precomposed(), title: text, label: value, sectionId: self.section, style: .blocks, action: {
+                return ItemListDisclosureItem(presentationData: presentationData, icon: UIImage(bundleImageName: hasFaceId ? "Settings/MenuIcons/FaceId" : "Settings/MenuIcons/TouchId")?.precomposed(), title: text, label: value, sectionId: self.section, style: .blocks, action: {
                     arguments.openPasscode()
                 })
             case let .twoStepVerification(_, text, value, data):
-                return ItemListDisclosureItem(presentationData: presentationData, icon: UIImage(bundleImageName: "Settings/Menu/TwoStepAuth")?.precomposed(), title: text, label: value, sectionId: self.section, style: .blocks, action: {
+                return ItemListDisclosureItem(presentationData: presentationData, icon: UIImage(bundleImageName: "Settings/MenuIcons/TwoStepAuth")?.precomposed(), title: text, label: value, sectionId: self.section, style: .blocks, action: {
                     arguments.openTwoStepVerification(data)
                 })
             case let .doubleBottom(_, text, value):
-                return ItemListDisclosureItem(presentationData: presentationData, icon: UIImage(bundleImageName: "Settings/Menu/DoubleBottom")?.precomposed(), longTapIcon: UIImage(bundleImageName: "Settings/Menu/DoubleBottomEaster")?.precomposed(), backgroundIcon: UIImage(bundleImageName: "Settings/Menu/DoubleBottomBackground")?.precomposed(), title: text, label: value, labelStyle: .monospaceText, sectionId: self.section, style: .blocks, action: {
-                    arguments.openDoubleBottomFlow()
-                })
-            case let .activeSessions(_, text, value):
-                return ItemListDisclosureItem(presentationData: presentationData, icon: UIImage(bundleImageName: "Settings/Menu/Websites")?.precomposed(), title: text, label: value, sectionId: self.section, style: .blocks, action: {
-                    arguments.openActiveSessions()
-                })
-            case let .autoArchiveHeader(text):
-                return ItemListSectionHeaderItem(presentationData: presentationData, text: text, sectionId: self.section)
+            return ItemListDisclosureItem(presentationData: presentationData, icon: UIImage(bundleImageName: "Settings/Menu/DoubleBottom")?.precomposed(), longTapIcon: UIImage(bundleImageName: "Settings/Menu/DoubleBottomEaster")?.precomposed(), backgroundIcon: UIImage(bundleImageName: "Settings/Menu/DoubleBottomBackground")?.precomposed(), title: text, label: value, labelStyle: .monospaceText, sectionId: self.section, style: .blocks, action: {
+                arguments.openDoubleBottomFlow()
+            })
+        case let .activeSessions(_, text, value):
+            return ItemListDisclosureItem(presentationData: presentationData, icon: UIImage(bundleImageName: "Settings/Menu/Websites")?.precomposed(), title: text, label: value, sectionId: self.section, style: .blocks, action: {
+                arguments.openActiveSessions()
+            })
+        case let .autoArchiveHeader(text):
+            return ItemListSectionHeaderItem(presentationData: presentationData, text: text, sectionId: self.section)
             case let .autoArchive(text, value):
                 return ItemListSwitchItem(presentationData: presentationData, title: text, value: value, sectionId: self.section, style: .blocks, updated: { value in
                     arguments.toggleArchiveAndMuteNonContacts(value)
@@ -881,10 +881,10 @@ public func privacyAndSecurityController(context: AccountContext, initialSetting
     |> distinctUntilChanged(isEqual: ==)
     
     let doubleBottomTimestampSignal = context.account.postbox.transaction({ transaction -> Int64 in
-        var value = transaction.getPreferencesEntry(key: PreferencesKeys.doubleBottomHideTimestamp) as? DoubleBottomHideTimestamp ?? DoubleBottomHideTimestamp.defaultValue
+        var value = transaction.getPreferencesEntry(key: PreferencesKeys.doubleBottomHideTimestamp)?.get(DoubleBottomHideTimestamp.self) ?? DoubleBottomHideTimestamp.defaultValue
         if value.timestamp == 0 {
             value.timestamp = Int64(Date().timeIntervalSince1970) + 600
-            transaction.setPreferencesEntry(key: PreferencesKeys.doubleBottomHideTimestamp, value: value)
+            transaction.setPreferencesEntry(key: PreferencesKeys.doubleBottomHideTimestamp, value: PreferencesEntry(value))
         }
         return value.timestamp
     })

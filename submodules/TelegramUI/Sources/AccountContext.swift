@@ -413,7 +413,6 @@ public final class AccountContextImpl: AccountContext {
                         if current is TelegramChannel || current is TelegramGroup {
                             let text: String
                             if let channel = current as? TelegramChannel, case .broadcast = channel.info {
-
                                 text = presentationData.strings.Call_LiveStreamInProgressCallMessage(EnginePeer(current).compactDisplayTitle, EnginePeer(peer).compactDisplayTitle).string
                             } else {
                                 text = presentationData.strings.Call_VoiceChatInProgressCallMessage(EnginePeer(current).compactDisplayTitle, EnginePeer(peer).compactDisplayTitle).string

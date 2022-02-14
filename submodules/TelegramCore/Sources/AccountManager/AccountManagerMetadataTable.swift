@@ -13,7 +13,7 @@ public struct AccessChallengeAttempts: Equatable {
     }
 }
 
-public enum PostboxAccessChallengeData: PostboxCoding, Equatable, Codable {
+public enum PostboxAccessChallengeData: PostboxCoding, Hashable, Codable {
     enum CodingKeys: String, CodingKey {
         case numericalPassword
         case plaintextPassword

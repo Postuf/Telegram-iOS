@@ -264,8 +264,6 @@ public class CallStatusBarNodeImpl: CallStatusBarNode {
 
     private let textFont = Font.with(size: 13.0, design: .regular, weight: .regular, traits: [.monospacedNumbers])
     
-    private let textFont = Font.with(size: 13.0, design: .regular, weight: .regular, traits: [.monospacedNumbers])
-    
     private func update() {
         guard let size = self.currentSize, let content = self.currentContent else {
             return
