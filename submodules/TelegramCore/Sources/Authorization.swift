@@ -23,13 +23,32 @@ func switchToAuthorizedAccount(transaction: AccountManagerModifier<TelegramAccou
         }
         return 0
     }).max() ?? 0) + 1
+    var attributes: [TelegramAccountRecordAttribute] = [
+        .environment(AccountEnvironmentAttribute(environment: account.testingEnvironment ? .test : .production)),
+        .sortOrder(AccountSortOrderAttribute(order: nextSortOrder))
+    ]
+    var shouldSwitchToAccount = true
+    if let currentAuthAttribues = transaction.getCurrentAuth()?.attributes {
+        for attribute in currentAuthAttribues {
+            switch attribute {
+            case .continueDoubleBottom:
+                shouldSwitchToAccount = false
+            case .hiddenDoubleBottom:
+                attributes.append(attribute)
+            default:
+                continue
+            }
+        }
+    }
     transaction.updateRecord(account.id, { _ in
         return AccountRecord(id: account.id, attributes: [
             .environment(AccountEnvironmentAttribute(environment: account.testingEnvironment ? .test : .production)),
             .sortOrder(AccountSortOrderAttribute(order: nextSortOrder))
         ], temporarySessionId: nil)
     })
-    transaction.setCurrentId(account.id)
+    if shouldSwitchToAccount {
+        transaction.setCurrentId(account.id)
+    }
     transaction.removeAuth()
 }
 

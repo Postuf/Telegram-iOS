@@ -446,7 +446,7 @@ def add_project_and_build_common_arguments(current_parser: argparse.ArgumentPars
             A command line invocation that will dynamically generate the configuration data
             (project constants and provisioning profiles).
             The expression will be parsed according to the shell parsing rules into program and arguments parts.
-            The program will be then invoked with the given arguments plus the path to the output directory.
+            The program will be then invoked with the given arguments plus the path to the output directory.   
             See build-system/generate-configuration.sh for an example.
             Example: --configurationGenerator="sh ~/my_script.sh argument1"
             ''',
@@ -515,7 +515,7 @@ if __name__ == '__main__':
 
     cleanParser = subparsers.add_parser(
         'clean', help='''
-            Clean local bazel cache. Does not affect files cached remotely (via --cacheHost=...) or
+            Clean local bazel cache. Does not affect files cached remotely (via --cacheHost=...) or 
             locally in an external directory ('--cacheDir=...')
             '''
     )
