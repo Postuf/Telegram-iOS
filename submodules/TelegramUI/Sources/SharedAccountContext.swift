@@ -1376,13 +1376,16 @@ public final class SharedAccountContextImpl: SharedAccountContext {
         }, automaticMediaDownloadSettings: MediaAutoDownloadSettings.defaultSettings,
            pollActionState: ChatInterfacePollActionState(), stickerSettings: ChatInterfaceStickerSettings(loopAnimatedStickers: false), presentationContext: ChatPresentationContext(backgroundNode: backgroundNode as? WallpaperBackgroundNode))
         
+        var entryAttributes = ChatMessageEntryAttributes()
+        entryAttributes.isCentered = isCentered
+        
         let content: ChatMessageItemContent
         let chatLocation: ChatLocation
         if messages.count > 1 {
-            content = .group(messages: messages.map { ($0, true, .none, ChatMessageEntryAttributes(), nil) })
+            content = .group(messages: messages.map { ($0, true, .none, entryAttributes, nil) })
             chatLocation = .peer(messages.first!.id.peerId)
         } else {
-            content = .message(message: messages.first!, read: true, selection: .none, attributes: ChatMessageEntryAttributes(), location: nil)
+            content = .message(message: messages.first!, read: true, selection: .none, attributes: entryAttributes, location: nil)
             chatLocation = .peer(messages.first!.id.peerId)
         }
         

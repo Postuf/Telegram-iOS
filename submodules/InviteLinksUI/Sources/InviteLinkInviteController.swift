@@ -165,7 +165,6 @@ public final class InviteLinkInviteController: ViewController {
     private var presentationData: PresentationData
     private var presentationDataDisposable: Disposable?
             
-
     public init(context: AccountContext, updatedPresentationData: (initial: PresentationData, signal: Signal<PresentationData, NoError>)? = nil, peerId: EnginePeer.Id, parentNavigationController: NavigationController?) {
         self.context = context
         self.peerId = peerId
@@ -280,7 +279,6 @@ public final class InviteLinkInviteController: ViewController {
         
         private var revokeDisposable = MetaDisposable()
         
-
         init(context: AccountContext, presentationData: PresentationData, peerId: EnginePeer.Id, controller: InviteLinkInviteController) {
             self.context = context
             self.peerId = peerId
@@ -374,7 +372,6 @@ public final class InviteLinkInviteController: ViewController {
                                 isGroup = true
                             }
                             let updatedPresentationData = (strongSelf.presentationData, strongSelf.presentationDataPromise.get())
-
                             let controller = QrCodeScreen(context: context, updatedPresentationData: updatedPresentationData, subject: .invite(invite: invite, isGroup: isGroup))
                             strongSelf.controller?.present(controller, in: .window(.root))
                         })
@@ -422,7 +419,6 @@ public final class InviteLinkInviteController: ViewController {
                     })
                 })))
 
-
                 let contextController = ContextController(account: context.account, presentationData: presentationData, source: .reference(InviteLinkContextReferenceContentSource(controller: controller, sourceNode: node)), items: .single(ContextController.Items(content: .list(items))), gesture: gesture)
                 self?.controller?.presentInGlobalOverlay(contextController)
             }, copyLink: { [weak self] invite in
@@ -438,7 +434,6 @@ public final class InviteLinkInviteController: ViewController {
                 }
                 let updatedPresentationData = (strongSelf.presentationData, strongSelf.presentationDataPromise.get())
                 let shareController = ShareController(context: context, subject: .url(invite.link), updatedPresentationData: updatedPresentationData)
-
                 shareController.completed = { [weak self] peerIds in
                     if let strongSelf = self {
                         let _ = (strongSelf.context.account.postbox.transaction { transaction -> [Peer] in

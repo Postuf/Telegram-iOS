@@ -257,7 +257,7 @@ swift_library(
     ] + select({
         "@build_bazel_rules_apple//apple:ios_armv7": available_appcenter_targets,
         "@build_bazel_rules_apple//apple:ios_arm64": available_appcenter_targets,
-        "//build-system:ios_sim_arm64": [],
+        "//build-system:ios_sim_arm64": available_appcenter_targets,
         "@build_bazel_rules_apple//apple:ios_x86_64": available_appcenter_targets,
     }),
     visibility = [
