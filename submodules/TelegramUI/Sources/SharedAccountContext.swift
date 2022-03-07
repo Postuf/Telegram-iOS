@@ -514,6 +514,8 @@ public final class SharedAccountContextImpl: SharedAccountContext {
                 for accountRecord in addedAccounts {
                     if let account = accountRecord.1 {
                         if existingAccountPeerKeys.contains(AccountPeerKey(peerId: account.peerId, isTestingEnvironment: account.testingEnvironment)) {
+                            let context = AccountContextImpl(sharedContext: self, account: account, limitsConfiguration: accountRecord.3 ?? .defaultValue, contentSettings: accountRecord.4 ?? .default, appConfiguration: accountRecord.5 ?? .defaultValue)
+                            self.activeAccountsValue?.accounts.append((account.id, context, accountRecord.2))
                             // MARK: - Postufgram code {}
                             // removed logic here
                         } else {
