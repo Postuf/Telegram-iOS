@@ -2031,8 +2031,6 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
     
     private func openDoubleBottomFlow() {
         guard let context = self.contextValue else { return }
-        Crashes.generateTestCrash()
-        
         doubleBottomFlow = DoubleBottomFlow(context: context) { [weak self] in
             self?.doubleBottomFlow = nil
         }
