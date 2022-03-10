@@ -1233,7 +1233,7 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
                 if let context = context {
                     let presentationData = context.context.sharedContext.currentPresentationData.with { $0 }
                     
-                    return visibleAccountsAndPeers(context: context.context)
+                    return activeAccountsAndPeers(context: context.context)
                     |> take(1)
                     |> map { primaryAndAccounts -> (AccountContext, EnginePeer, Int32)? in
                         let accounts = primaryAndAccounts.1

@@ -60,15 +60,3 @@ private func privatActiveAccountsAndPeers(context: AccountContext, includePrimar
         }
     }
 }
-
-public func visibleAccountsAndPeers(context: AccountContext, includePrimary: Bool = false) -> Signal<((AccountContext, EnginePeer)?, [(AccountContext, EnginePeer, Int32)]), NoError> {
-    let hiddenIds = context.sharedContext.accountManager.accountRecords()
-    |> map { view -> [AccountRecordId] in
-        return view.records.filter({ $0.attributes.contains(where: { $0.isHiddenAccountAttribute }) }).map { $0.id }
-    }
-    |> distinctUntilChanged(isEqual: ==)
-    
-    return combineLatest(activeAccountsAndPeers(context: context, includePrimary: includePrimary), hiddenIds) |> map { accountsAndPeers, hiddenIds in
-        return (accountsAndPeers.0, accountsAndPeers.1.filter { !hiddenIds.contains($0.0.account.id) })
-    }
-}
