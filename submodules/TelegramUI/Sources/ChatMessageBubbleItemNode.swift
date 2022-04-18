@@ -2,6 +2,7 @@ import Foundation
 import UIKit
 import AsyncDisplayKit
 import Display
+import SwiftSignalKit
 import Postbox
 import TelegramCore
 import TelegramPresentationData
@@ -21,7 +22,8 @@ import GridMessageSelectionNode
 import AppBundle
 import Markdown
 import WallpaperBackgroundNode
-import SwiftSignalKit
+import ChatPresentationInterfaceState
+import ChatMessageBackground
 
 enum InternalBubbleTapAction {
     case action(() -> Void)
@@ -797,6 +799,18 @@ class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewItemNode
         self.mainContextSourceNode.contentNode.layer.animateAlpha(from: 0.0, to: 1.0, duration: 0.1)
     }
     
+    func animateContentFromGroupedMediaInput(transition: CombinedTransition) -> [CGRect] {
+        self.mainContextSourceNode.contentNode.layer.animateAlpha(from: 0.0, to: 1.0, duration: 0.1)
+        
+        var rects: [CGRect] = []
+        for contentNode in self.contentNodes {
+            if let contentNode = contentNode as? ChatMessageMediaBubbleContentNode {
+                rects.append(contentNode.frame.offsetBy(dx: -self.clippingNode.frame.minX, dy: 0.0))
+            }
+        }
+        return rects
+    }
+    
     override func didLoad() {
         super.didLoad()
         
@@ -1193,7 +1207,7 @@ class ChatMessageBubbleItemNode: ChatMessageItemView, ChatMessagePreviewItemNode
                 needsShareButton = false
             }
         }
-        
+                
         var tmpWidth: CGFloat
         if allowFullWidth {
             tmpWidth = baseWidth

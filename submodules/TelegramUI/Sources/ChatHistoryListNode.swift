@@ -19,6 +19,7 @@ import ChatInterfaceState
 import ChatListUI
 import ComponentFlow
 import ReactionSelectionNode
+import ChatPresentationInterfaceState
 
 extension ChatReplyThreadMessage {
     var effectiveTopId: MessageId {
@@ -1814,6 +1815,7 @@ public final class ChatHistoryListNode: ListView, ChatHistoryNode {
             var messageIdsWithRefreshMedia: [MessageId] = []
             var messageIdsWithUnseenPersonalMention: [MessageId] = []
             var messageIdsWithUnseenReactions: [MessageId] = []
+            var downloadableResourceIds: [(messageId: MessageId, resourceId: String)] = []
             
             if indexRange.0 <= indexRange.1 {
                 for i in (indexRange.0 ... indexRange.1) {
@@ -1874,6 +1876,11 @@ public final class ChatHistoryListNode: ListView, ChatHistoryNode {
                                         }
                                     }
                                 }
+                                downloadableResourceIds.append((message.id, telegramFile.resource.id.stringRepresentation))
+                            } else if let image = media as? TelegramMediaImage {
+                                if let representation = image.representations.last {
+                                    downloadableResourceIds.append((message.id, representation.resource.id.stringRepresentation))
+                                }
                             }
                         }
                         if contentRequiredValidation {
@@ -1888,6 +1895,7 @@ public final class ChatHistoryListNode: ListView, ChatHistoryNode {
                         if hasUnseenReactions {
                             messageIdsWithUnseenReactions.append(message.id)
                         }
+                        
                         if case let .replyThread(replyThreadMessage) = self.chatLocation, replyThreadMessage.effectiveTopId == message.id {
                             isTopReplyThreadMessageShownValue = true
                         }
@@ -1905,6 +1913,15 @@ public final class ChatHistoryListNode: ListView, ChatHistoryNode {
                                 for attribute in message.attributes {
                                     if let attribute = attribute as? ConsumablePersonalMentionMessageAttribute, !attribute.pending {
                                         hasUnconsumedMention = true
+                                    }
+                                }
+                            }
+                            for media in message.media {
+                                if let telegramFile = media as? TelegramMediaFile {
+                                    downloadableResourceIds.append((message.id, telegramFile.resource.id.stringRepresentation))
+                                } else if let image = media as? TelegramMediaImage {
+                                    if let representation = image.representations.last {
+                                        downloadableResourceIds.append((message.id, representation.resource.id.stringRepresentation))
                                     }
                                 }
                             }
@@ -2071,6 +2088,9 @@ public final class ChatHistoryListNode: ListView, ChatHistoryNode {
             }
             if !messageIdsWithPossibleReactions.isEmpty {
                 self.messageWithReactionsProcessingManager.add(messageIdsWithPossibleReactions)
+            }
+            if !downloadableResourceIds.isEmpty {
+                let _ = markRecentDownloadItemsAsSeen(postbox: self.context.account.postbox, items: downloadableResourceIds).start()
             }
             
             self.currentEarlierPrefetchMessages = toEarlierMediaMessages
@@ -2575,15 +2595,15 @@ public final class ChatHistoryListNode: ListView, ChatHistoryNode {
                     self?.scrolledToSomeIndex?()
                 }
 
-                if let currentSendAnimationCorrelationId = strongSelf.currentSendAnimationCorrelationId {
-                    var foundItemNode: ChatMessageItemView?
+                if let currentSendAnimationCorrelationIds = strongSelf.currentSendAnimationCorrelationIds {
+                    var foundItemNodes: [Int64: ChatMessageItemView] = [:]
                     strongSelf.forEachItemNode { itemNode in
                         if let itemNode = itemNode as? ChatMessageItemView, let item = itemNode.item {
                             for (message, _) in item.content {
                                 for attribute in message.attributes {
-                                    if let attribute = attribute as? OutgoingMessageInfoAttribute {
-                                        if attribute.correlationId == currentSendAnimationCorrelationId {
-                                            foundItemNode = itemNode
+                                    if let attribute = attribute as? OutgoingMessageInfoAttribute, let correlationId = attribute.correlationId {
+                                        if currentSendAnimationCorrelationIds.contains(correlationId) {
+                                            foundItemNodes[correlationId] = itemNode
                                         }
                                     }
                                 }
@@ -2591,9 +2611,9 @@ public final class ChatHistoryListNode: ListView, ChatHistoryNode {
                         }
                     }
 
-                    if let foundItemNode = foundItemNode {
-                        strongSelf.currentSendAnimationCorrelationId = nil
-                        strongSelf.animationCorrelationMessageFound?(foundItemNode, currentSendAnimationCorrelationId)
+                    if !foundItemNodes.isEmpty {
+                        strongSelf.currentSendAnimationCorrelationIds = nil
+                        strongSelf.animationCorrelationMessagesFound?(foundItemNodes)
                     }
                 }
                 
@@ -3205,12 +3225,12 @@ public final class ChatHistoryListNode: ListView, ChatHistoryNode {
         }
     }
 
-    private var currentSendAnimationCorrelationId: Int64?
-    func setCurrentSendAnimationCorrelationId(_ value: Int64?) {
-        self.currentSendAnimationCorrelationId = value
+    private var currentSendAnimationCorrelationIds: Set<Int64>?
+    func setCurrentSendAnimationCorrelationIds(_ value: Set<Int64>?) {
+        self.currentSendAnimationCorrelationIds = value
     }
 
-    var animationCorrelationMessageFound: ((ChatMessageItemView, Int64?) -> Void)?
+    var animationCorrelationMessagesFound: (([Int64: ChatMessageItemView]) -> Void)?
 
     final class SnapshotState {
         fileprivate let snapshotTopInset: CGFloat

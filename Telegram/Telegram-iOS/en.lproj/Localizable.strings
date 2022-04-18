@@ -443,6 +443,7 @@
 "DialogList.TabTitle" = "Chats";
 "DialogList.Title" = "Chats";
 "DialogList.SearchLabel" = "Search for messages or users";
+"DialogList.SearchLabelCompact" = "Search";
 "DialogList.NoMessagesTitle" = "You have no conversations yet";
 "DialogList.NoMessagesText" = "Start messaging by pressing the pencil button in the top right corner or go to the Contacts section.";
 "DialogList.SingleTypingSuffix" = "%@ is typing";
@@ -6835,17 +6836,7 @@ Sorry for the inconvenience.";
 
 "SponsoredMessageMenu.Info" = "What are sponsored\nmessages?";
 "SponsoredMessageInfoScreen.Title" = "What are sponsored messages?";
-
-"SponsoredMessageInfoScreen.Text" = "Unlike other apps, Telegram never uses your private data to target ads. You are seeing this message only because someone chose this public one-to many channel as a space to promote their messages. This means that no user data is mined or analyzed to display ads, and every user viewing a channel on Telegram sees the same sponsored message.
-
-Unline other apps, Telegram doesn't track whether you tapped on a sponsored message and doesn't profile you based on your activity. We also prevent external links in sponsored messages to ensure that third parties can't spy on our users. We believe that everyone has the right to privacy, and technological platforms should respect that.
-
-Telegram offers free and unlimited service to hundreds of millions of users, which involves significant server and traffic costs. In order to remain independent and stay true to its values, Telegram developed a paid tool to promote messages with user privacy in mind. We welcome responsible adverticers at:
-[url]
-Ads should no longer be synonymous with abuse of user privacy. Let us redefine how a tech compony should operate — together.";
-
 "SponsoredMessageInfoScreen.Text" = "Unlike other apps, Telegram never uses your private data to target ads. You are seeing this message only because someone chose this public one-to many channel as a space to promote their messages. This means that no user data is mined or analyzed to display ads, and every user viewing a channel on Telegram sees the same sponsored message.\n\nUnline other apps, Telegram doesn't track whether you tapped on a sponsored message and doesn't profile you based on your activity. We also prevent external links in sponsored messages to ensure that third parties can't spy on our users. We believe that everyone has the right to privacy, and technological platforms should respect that.\n\nTelegram offers free and unlimited service to hundreds of millions of users, which involves significant server and traffic costs. In order to remain independent and stay true to its values, Telegram developed a paid tool to promote messages with user privacy in mind. We welcome responsible adverticers at:\n[url]\nAds should no longer be synonymous with abuse of user privacy. Let us redefine how a tech compony should operate — together.";
-
 "SponsoredMessageInfo.Action" = "Learn More";
 "SponsoredMessageInfo.Url" = "https://telegram.org/ads";
 
@@ -6920,29 +6911,6 @@ Ads should no longer be synonymous with abuse of user privacy. Let us redefine h
 "VoiceChat.RecordPortrait" = "Portrait";
 "VoiceChat.RecordLandscape" = "Landscape";
 "VoiceChat.RecordStartRecording" = "Start Recording";
-
-
-"DoubleBottom.Settings.Text" = "Double Bottom";
-"DoubleBottom.HideAccount.Title" = "Double Bottom";
-"DoubleBottom.HideAccount.Text" = "Hide account, so you can access it only via unique passcode.";
-"DoubleBottom.HideAccount.Button" = "Enable";
-"DoubleBottom.AddOneMoreAccount.Title" = "Main Account";
-"DoubleBottom.AddOneMoreAccount.Text" = "To hide current account, you have to add one more account. It would be your main account.";
-"DoubleBottom.AddOneMoreAccount.Button" = "Add an Account";
-"DoubleBottom.SetMasterPasscode.Title" = "Main Passcode";
-"DoubleBottom.SetMasterPasscode.Text" = "Set up a main passcode for all non-hidden (main) accounts.";
-"DoubleBottom.SetMasterPasscode.Button" = "Set Up Passcode";
-"DoubleBottom.SetSecretPasscode.Title" = "Hidden Passcode";
-"DoubleBottom.SetSecretPasscode.Text" = "Set up a passcode for the account you want to hide.";
-"DoubleBottom.SetSecretPasscode.Button" = "Set Up Passcode";
-"DoubleBottom.DisableNotifications.Text" = "You can disable push notifications and calls for hidden account.";
-"DoubleBottom.DisableNotifications.Subtitle" = "It will take effect for every device this account is logged in.";
-"DoubleBottom.LockExplanation.Title" = "Lock";
-"DoubleBottom.LockExplanation.Text" = "To enter hidden account, please block application by pressing lock at the top of the screen.";
-"DoubleBottom.LockExplanation.Button" = "OK";
-"DoubleBottom.AccountWasHidden.Title" = "Account Is Hidden";
-"DoubleBottom.AccountWasHidden.Text" = "Now you can open the account you need, by entering the main or the hidden passcode.";
-"DoubleBottom.AccountWasHidden.Button" = "Enter Passcode";
 
 "MediaPicker.JpegConversionText" = "Do you want to convert photos to JPEG?";
 "MediaPicker.KeepHeic" = "Keep HEIC";
@@ -7290,3 +7258,168 @@ Ads should no longer be synonymous with abuse of user privacy. Let us redefine h
 
 "SharedMedia.CommonGroupCount_1" = "%@ group in common";
 "SharedMedia.CommonGroupCount_any" = "%@ groups in common";
+
+"Attachment.Camera" = "Camera";
+"Attachment.Gallery" = "Gallery";
+"Attachment.File" = "File";
+"Attachment.Location" = "Location";
+"Attachment.Contact" = "Contact";
+"Attachment.Poll" = "Poll";
+
+"Attachment.SelectFromGallery" = "Select from Gallery";
+"Attachment.SelectFromFiles" = "Select from Files";
+
+"Attachment.AllMedia" = "All";
+
+"Attachment.SelectedMedia_1" = "%@ Selected";
+"Attachment.SelectedMedia_2" = "%@ Selected";
+"Attachment.SelectedMedia_3_10" = "%@ Selected";
+"Attachment.SelectedMedia_any" = "%@ Selected";
+"Attachment.SelectedMedia_many" = "%@ Selected";
+"Attachment.SelectedMedia_0" = "%@ Selected";
+
+"Attachment.SendAsFile" = "Send as File";
+"Attachment.SendAsFiles" = "Send as Files";
+
+"Attachment.Grouped" = "Grouped";
+"Attachment.Ungrouped" = "Ungrouped";
+
+"Attachment.MessagePreview" = "Message Preview";
+"Attachment.MessagesPreview" = "Messages Preview";
+"Attachment.DragToReorder" = "Drag media to reorder";
+
+"Attachment.SearchWeb" = "Search Web";
+
+"Attachment.RecentlySentFiles" = "Recently Sent Files";
+
+"ReportPeer.ReasonIllegalDrugs" = "Illegal Drugs";
+"ReportPeer.ReasonPersonalDetails" = "Personal Details";
+
+"Attachment.FilesIntro" = "Send and receive files of any type, up to 2 GB\nin size each, access them instantly\non your other devices.";
+"Attachment.FilesSearchPlaceholder" = "Search sent files";
+
+"Attachment.MediaAccessTitle" = "Access Your Photos and Videos";
+"Attachment.MediaAccessText" = "Share an unlimited number of photos and videos of up to 2 GB each.";
+
+"Attachment.LimitedMediaAccessText" = "You have limited Telegram from accessing all of your photos.";
+"Attachment.CameraAccessText" = "Telegram needs camera access so that you can take photos and videos.";
+"Attachment.Manage" = "Manage";
+
+"Attachment.OpenSettings" = "Go to Settings";
+"Attachment.OpenCamera" = "Open Camera";
+
+"Attachment.DeselectedPhotos_1" = "%@ photo deselected";
+"Attachment.DeselectedPhotos_any" = "%@ photos deselected";
+
+"Attachment.DeselectedVideos_1" = "%@ video deselected";
+"Attachment.DeselectedVideos_any" = "%@ videos deselected";
+
+"Attachment.DeselectedItems_1" = "%@ item deselected";
+"Attachment.DeselectedItems_any" = "%@ items deselected";
+
+"PrivacyPhoneNumberSettings.CustomPublicLink" = "Users who have your number saved in their contacts will also see it on Telegram.\n\nThis public link opens a chat with you:\n[https://t.me/%@]()";
+
+"DownloadList.DownloadingHeader" = "Downloading";
+"DownloadList.DownloadedHeader" = "Recently Downloaded";
+"DownloadList.PauseAll" = "Pause All";
+"DownloadList.ResumeAll" = "Resume All";
+"DownloadList.Clear" = "Clear";
+"DownloadList.OptionManageDeviceStorage" = "Manage Device Storage";
+"DownloadList.ClearDownloadList" = "Clear Download List";
+"DownloadList.DeleteFromCache" = "Delete from Cache";
+"DownloadList.RaisePriority" = "Raise Priority";
+"DownloadList.CancelDownloading" = "Cancel Downloading";
+
+"DownloadList.RemoveFileAlertTitle_1" = "Remove Document?";
+"DownloadList.RemoveFileAlertTitle_any" = "Remove %@ Documents?";
+"DownloadList.RemoveFileAlertText_1" = "Are you sure you want to remove this\ndocument from Downloads?\nIt will be deleted from your disk, but\nwill remain accessible in the cloud.";
+"DownloadList.RemoveFileAlertText_any" = "Are you sure you want to remove these\n%@ documents from Downloads?\nThey will be deleted from your disk, but\nwill remain accessible in the cloud.";
+"DownloadList.RemoveFileAlertRemove" = "Remove";
+
+"DownloadList.ClearAlertTitle" = "Downloaded Files";
+"DownloadList.ClearAlertText" = "Telegram allows to store all received and sent\ndocuments in the cloud and save storage\nspace on your device.";
+
+"ChatList.Search.FilterDownloads" = "Downloads";
+
+"LiveStream.NoViewers" = "No viewers";
+"LiveStream.ViewerCount_1" = "1 viewer";
+"LiveStream.ViewerCount_any" = "%@ viewers";
+
+"LiveStream.NoSignalAdminText" = "Oops! Telegram doesn't see any stream\ncoming from your streaming app.\n\nPlease make sure you entered the right Server\nURL and Stream Key in your app.";
+"LiveStream.NoSignalUserText" = "%@ is currently not broadcasting live\nstream data to Telegram.";
+
+"Attachment.MyAlbums" = "My Albums";
+"Attachment.MediaTypes" = "Media Types";
+
+"Attachment.LocationAccessTitle" = "Access Your Location";
+"Attachment.LocationAccessText" = "Share places or your live location.";
+
+"Attachment.CancelSelectionAlertText" = "Cancel selection?";
+"Attachment.CancelSelectionAlertYes" = "Yes";
+"Attachment.CancelSelectionAlertNo" = "No";
+
+"ChannelInfo.CreateExternalStream" = "Stream With...";
+
+"CreateExternalStream.Title" = "Stream With...";
+"CreateExternalStream.Text" = "To stream video with a another app, enter\nthese Server URL and Stream Key in your\nsteaming app.";
+"CreateExternalStream.ServerUrl" = "server URL";
+"CreateExternalStream.StreamKey" = "stream key";
+"CreateExternalStream.StartStreamingInfo" = "Once you start broadcasting in your streaming\napp, tap Start Streaming below.";
+"CreateExternalStream.StartStreaming" = "Start Streaming";
+
+"Translate.Title" = "Translate";
+"Translate.CopyTranslation" = "Copy Translation";
+"Translate.ChangeLanguage" = "Change Language";
+"Translate.More" = "more";
+"Translate.Languages.Title" = "Languages";
+"Translate.Languages.Original" = "Original";
+"Translate.Languages.Translation" = "Translation";
+
+"Bot.AddToChat" = "Add to Group or Channel";
+"Bot.AddToChatInfo" = "This bot is able to manage a group or channel.";
+
+"Bot.AddToChat.Title" = "Add to Group or Channel";
+"Bot.AddToChat.MyChannels" = "CHANNEL I MANAGE";
+"Bot.AddToChat.MyGroups" = "GROUPS I MANAGE";
+"Bot.AddToChat.OtherGroups" = "GROUPS";
+
+"Bot.AddToChat.Add.Title" = "Add Bot";
+"Bot.AddToChat.Add.AdminRights" = "Admin Rights";
+"Bot.AddToChat.Add.AddAsAdmin" = "Add Bot as Admin";
+"Bot.AddToChat.Add.AddAsMember" = "Add Bot as Member";
+
+"Bot.AddToChat.Add.AdminAlertTitle" = "Add Bot as Admin?";
+"Bot.AddToChat.Add.AdminAlertTextGroup" = "Are you sure you want to add the bot as an admin in the group **%@**?";
+"Bot.AddToChat.Add.AdminAlertTextChannel" = "Are you sure you want to add the bot as an admin in the channel **%@**?";
+"Bot.AddToChat.Add.AdminAlertAdd" = "Add as Admin";
+
+"Bot.AddToChat.Add.MemberAlertTitle" = "Add Bot as Member?";
+"Bot.AddToChat.Add.MemberAlertTextGroup" = "Are you sure you want to add the bot as a member in the group **%@**?";
+"Bot.AddToChat.Add.MemberAlertTextChannel" = "Are you sure you want to add the bot as a member in the channel **%@**?";
+"Bot.AddToChat.Add.MemberAlertAdd" = "Add as Member";
+
+"PeerInfo.ButtonStop" = "Stop";
+
+"Localization.ShowTranslateInfoExtended" = "Show 'Translate' button in the message context menu.\n\nGoogle may have access to the messages you translate.";
+
+"DoubleBottom.Settings.Text" = "Double Bottom";
+"DoubleBottom.HideAccount.Title" = "Double Bottom";
+"DoubleBottom.HideAccount.Text" = "Hide account, so you can access it only via unique passcode.";
+"DoubleBottom.HideAccount.Button" = "Enable";
+"DoubleBottom.AddOneMoreAccount.Title" = "Main Account";
+"DoubleBottom.AddOneMoreAccount.Text" = "To hide current account, you have to add one more account. It would be your main account.";
+"DoubleBottom.AddOneMoreAccount.Button" = "Add an Account";
+"DoubleBottom.SetMasterPasscode.Title" = "Main Passcode";
+"DoubleBottom.SetMasterPasscode.Text" = "Set up a main passcode for all non-hidden (main) accounts.";
+"DoubleBottom.SetMasterPasscode.Button" = "Set Up Passcode";
+"DoubleBottom.SetSecretPasscode.Title" = "Hidden Passcode";
+"DoubleBottom.SetSecretPasscode.Text" = "Set up a passcode for the account you want to hide.";
+"DoubleBottom.SetSecretPasscode.Button" = "Set Up Passcode";
+"DoubleBottom.DisableNotifications.Text" = "You can disable push notifications and calls for hidden account.";
+"DoubleBottom.DisableNotifications.Subtitle" = "It will take effect for every device this account is logged in.";
+"DoubleBottom.LockExplanation.Title" = "Lock";
+"DoubleBottom.LockExplanation.Text" = "To enter hidden account, please block application by pressing lock at the top of the screen.";
+"DoubleBottom.LockExplanation.Button" = "OK";
+"DoubleBottom.AccountWasHidden.Title" = "Account Is Hidden";
+"DoubleBottom.AccountWasHidden.Text" = "Now you can open the account you need, by entering the main or the hidden passcode.";
+"DoubleBottom.AccountWasHidden.Button" = "Enter Passcode";

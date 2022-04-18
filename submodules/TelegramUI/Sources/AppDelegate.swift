@@ -711,7 +711,7 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
             UIDevice.current.setValue(value, forKey: "orientation")
             UINavigationController.attemptRotationToDeviceOrientation()
         })
-        
+
         let hiddenAccountManager = HiddenAccountManagerImpl()
         let accountManager = AccountManager<TelegramAccountManagerTypes>(basePath: rootPath + "/accounts-metadata", isTemporary: false, isReadOnly: false, useCaches: true, removeDatabaseOnError: true, hiddenAccountManager: hiddenAccountManager)
         self.accountManager = accountManager
@@ -1470,7 +1470,7 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
         }
         
         Logger.shared.log("App \(self.episodeId)", "remoteNotification: \(redactedPayload)")
-        
+
         if userInfo["p"] == nil {
             completionHandler(.noData)
             return

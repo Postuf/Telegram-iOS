@@ -18,6 +18,9 @@ import ObjCRuntimeUtils
 import AvatarNode
 import ContextUI
 import InvisibleInkDustNode
+import TextInputMenu
+import Pasteboard
+import ChatPresentationInterfaceState
 
 private let accessoryButtonFont = Font.medium(14.0)
 private let counterFont = Font.with(size: 14.0, design: .regular, traits: [.monospacedNumbers])
@@ -296,7 +299,7 @@ class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDelegate {
     
     var isMediaDeleted: Bool = false
     
-    private let inputMenu: ChatTextInputMenu
+    private let inputMenu: TextInputMenu
     
     private var theme: PresentationTheme?
     private var strings: PresentationStrings?
@@ -452,7 +455,7 @@ class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDelegate {
         if presentationInterfaceState.chatLocation.peerId.namespace == Namespaces.Peer.SecretChat {
             hasSpoilers = false
         }
-        self.inputMenu = ChatTextInputMenu(hasSpoilers: hasSpoilers)
+        self.inputMenu = TextInputMenu(hasSpoilers: hasSpoilers)
         
         self.clippingNode = ASDisplayNode()
         self.clippingNode.clipsToBounds = true
@@ -2313,7 +2316,7 @@ class ChatTextInputPanelNode: ChatInputPanelNode, ASEditableTextNodeDelegate {
             text = current.inputText.attributedSubstring(from: NSMakeRange(current.selectionRange.lowerBound, current.selectionRange.count)).string
             return (current, inputMode)
         }
-        speakText(text)
+        let _ = speakText(text)
         
         if #available(iOS 13.0, *) {
             UIMenuController.shared.hideMenu()
