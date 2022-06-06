@@ -578,13 +578,13 @@ final class AnimatedStickerDirectFrameSource: AnimatedStickerFrameSource {
         return self.currentFrame % self.frameCount
     }
     
-    init?(queue: Queue, data: Data, width: Int, height: Int, cachePathPrefix: String?, useMetalCache: Bool = false, fitzModifier: EmojiFitzModifier?) {
+    init?(queue: Queue, data: Data, width: Int, height: Int, cachePathPrefix: String?, useMetalCache: Bool = false, fitzModifier: EmojiFitzModifier?, currentFrame: Int = 0) {
         self.queue = queue
         self.data = data
         self.width = width
         self.height = height
         self.bytesPerRow = DeviceGraphicsContextSettings.shared.bytesPerRow(forWidth: Int(width))
-        self.currentFrame = 0
+        self.currentFrame = currentFrame
         let decompressedData = TGGUnzipData(data, 8 * 1024 * 1024) ?? data
         
         guard let animation = LottieInstance(data: decompressedData, fitzModifier: fitzModifier?.lottieFitzModifier ?? .none, colorReplacements: nil, cacheKey: "") else {

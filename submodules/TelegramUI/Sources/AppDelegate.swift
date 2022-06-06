@@ -1510,14 +1510,22 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
     
     public func pushRegistry(_ registry: PKPushRegistry, didReceiveIncomingPushWith payload: PKPushPayload, for type: PKPushType, completion: @escaping () -> Void) {
         Logger.shared.log("App \(self.episodeId) PushRegistry", "pushRegistry didReceiveIncomingPushWith \(payload.dictionaryPayload)")
-        
-        self.pushRegistryImpl(registry, didReceiveIncomingPushWith: payload, for: type, completion: completion)
+
+        // MARK: Postufgram Code: {
+        if UIApplication.shared.applicationState == .active {
+            self.pushRegistryImpl(registry, didReceiveIncomingPushWith: payload, for: type, completion: completion)
+        }
+        // MARK: Postufgram Code: }
     }
     
     public func pushRegistry(_ registry: PKPushRegistry, didReceiveIncomingPushWith payload: PKPushPayload, for type: PKPushType) {
         Logger.shared.log("App \(self.episodeId) PushRegistry", "pushRegistry didReceiveIncomingPushWith \(payload.dictionaryPayload)")
-        
-        self.pushRegistryImpl(registry, didReceiveIncomingPushWith: payload, for: type, completion: {})
+
+        // MARK: Postufgram Code: {
+        if UIApplication.shared.applicationState == .active {
+            self.pushRegistryImpl(registry, didReceiveIncomingPushWith: payload, for: type, completion: {})
+        }
+        // MARK: Postufgram Code: }
     }
     
     private func pushRegistryImpl(_ registry: PKPushRegistry, didReceiveIncomingPushWith payload: PKPushPayload, for type: PKPushType, completion: @escaping () -> Void) {
@@ -1617,27 +1625,29 @@ private func extractAccountManagerState(records: AccountRecordsView<TelegramAcco
             return
         }
 
-        callKitIntegration.reportIncomingCall(
-            uuid: CallSessionManager.getStableIncomingUUID(stableId: callUpdate.callId),
-            stableId: callUpdate.callId,
-            handle: "\(callUpdate.peer.id.id._internalGetInt64Value())",
-            isVideo: false,
-            displayTitle: callUpdate.peer.debugDisplayTitle,
-            completion: { error in
-                if let error = error {
-                    if error.domain == "com.apple.CallKit.error.incomingcall" && (error.code == -3 || error.code == 3) {
-                        Logger.shared.log("PresentationCall", "reportIncomingCall device in DND mode")
-                    } else {
-                        Logger.shared.log("PresentationCall", "reportIncomingCall error \(error)")
-                        /*Queue.mainQueue().async {
-                            if let strongSelf = self {
-                                strongSelf.callSessionManager.drop(internalId: strongSelf.internalId, reason: .hangUp, debugLog: .single(nil))
-                            }
-                        }*/
-                    }
-                }
-            }
-        )
+        // MARK: Postufgram Code: {
+        // callKitIntegration.reportIncomingCall(
+        //    uuid: CallSessionManager.getStableIncomingUUID(stableId: callUpdate.callId),
+        //    stableId: callUpdate.callId,
+        //    handle: "\(callUpdate.peer.id.id._internalGetInt64Value())",
+        //    isVideo: false,
+        //    displayTitle: callUpdate.peer.debugDisplayTitle,
+        //    completion: { error in
+        //        if let error = error {
+        //            if error.domain == "com.apple.CallKit.error.incomingcall" && (error.code == -3 || error.code == 3) {
+        //                Logger.shared.log("PresentationCall", "reportIncomingCall device in DND mode")
+        //            } else {
+        //                Logger.shared.log("PresentationCall", "reportIncomingCall error \(error)")
+        //                /*Queue.mainQueue().async {
+        //                    if let strongSelf = self {
+        //                        strongSelf.callSessionManager.drop(internalId: strongSelf.internalId, reason: .hangUp, debugLog: .single(nil))
+        //                    }
+        //                }*/
+        //            }
+        //        }
+        //    }
+        // )
+        // MARK: Postufgram Code: }
         
         let _ = (self.sharedContextPromise.get()
         |> take(1)

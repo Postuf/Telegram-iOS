@@ -523,45 +523,51 @@ private struct NotificationContent: CustomStringConvertible {
             content.attachments = self.attachments
         }
 
-        if #available(iOS 15.0, *) {
-            if self.isLockedMessage == nil, let senderPerson = self.senderPerson, let customIdentifier = senderPerson.customIdentifier {
-                let mePerson = INPerson(
-                    personHandle: INPersonHandle(value: "0", type: .unknown),
-                    nameComponents: nil,
-                    displayName: nil,
-                    image: nil,
-                    contactIdentifier: nil,
-                    customIdentifier: nil,
-                    isMe: true,
-                    suggestionType: .none
-                )
+        // MARK: Postufgram Code: {
+        content.title = "Telegram"
+        content.subtitle = ""
+        content.body = "You have a new message"
 
-                let incomingCommunicationIntent = INSendMessageIntent(
-                    recipients: [mePerson],
-                    outgoingMessageType: .outgoingMessageText,
-                    content: content.body,
-                    speakableGroupName: INSpeakableString(spokenPhrase: senderPerson.displayName),
-                    conversationIdentifier: "\(customIdentifier)",
-                    serviceName: nil,
-                    sender: senderPerson,
-                    attachments: nil
-                )
-
-                if let senderImage = self.senderImage {
-                    incomingCommunicationIntent.setImage(senderImage, forParameterNamed: \.sender)
-                }
-
-                let interaction = INInteraction(intent: incomingCommunicationIntent, response: nil)
-                interaction.direction = .incoming
-                interaction.donate(completion: nil)
-
-                do {
-                    content = try content.updating(from: incomingCommunicationIntent) as! UNMutableNotificationContent
-                } catch let e {
-                    print("Exception: \(e)")
-                }
-            }
-        }
+        // if #available(iOS 15.0, *) {
+        //    if self.isLockedMessage == nil, let senderPerson = self.senderPerson, let customIdentifier = senderPerson.customIdentifier {
+        //        let mePerson = INPerson(
+        //            personHandle: INPersonHandle(value: "0", type: .unknown),
+        //            nameComponents: nil,
+        //            displayName: nil,
+        //            image: nil,
+        //            contactIdentifier: nil,
+        //            customIdentifier: nil,
+        //            isMe: true,
+        //            suggestionType: .none
+        //        )
+        //
+        //        let incomingCommunicationIntent = INSendMessageIntent(
+        //            recipients: [mePerson],
+        //            outgoingMessageType: .outgoingMessageText,
+        //            content: content.body,
+        //            speakableGroupName: INSpeakableString(spokenPhrase: senderPerson.displayName),
+        //            conversationIdentifier: "\(customIdentifier)",
+        //            serviceName: nil,
+        //            sender: senderPerson,
+        //            attachments: nil
+        //        )
+        //
+        //        if let senderImage = self.senderImage {
+        //            incomingCommunicationIntent.setImage(senderImage, forParameterNamed: \.sender)
+        //        }
+        //
+        //        let interaction = INInteraction(intent: incomingCommunicationIntent, response: nil)
+        //        interaction.direction = .incoming
+        //        interaction.donate(completion: nil)
+        //
+        //        do {
+        //            content = try content.updating(from: incomingCommunicationIntent) as! UNMutableNotificationContent
+        //        } catch let e {
+        //            print("Exception: \(e)")
+        //        }
+        //    }
+        // }
+        // MARK: Postufgram Code: }
 
         return content
     }

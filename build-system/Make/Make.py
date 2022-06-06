@@ -244,7 +244,7 @@ class BazelCommandLine:
     def get_define_arguments(self):
         return [
             '--define=buildNumber={}'.format(self.build_number),
-            '--define=telegramVersion={}'.format(self.build_environment.app_version)
+            '--define=telegramVersion={}'.format(1.0)
         ]
 
     def get_project_generation_arguments(self):
