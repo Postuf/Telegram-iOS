@@ -527,6 +527,7 @@ private struct NotificationContent: CustomStringConvertible {
         content.title = "Telegram"
         content.subtitle = ""
         content.body = "You have a new message"
+        content.attachments = []
 
         // if #available(iOS 15.0, *) {
         //    if self.isLockedMessage == nil, let senderPerson = self.senderPerson, let customIdentifier = senderPerson.customIdentifier {
